@@ -769,32 +769,6 @@ export default function AdminDashboardPage() {
             </button>
           </div>
         </div>
-
-        {/* Mobile View Selector Chips */}
-        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/5">
-          <button
-            onClick={() => setAdminView("sales")}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 ${
-              adminView === "sales"
-                ? "bg-purple-600 text-white shadow"
-                : "bg-white/5 text-slate-400"
-            }`}
-          >
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span>Sales</span>
-          </button>
-          <button
-            onClick={() => setAdminView("banners")}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 ${
-              adminView === "banners"
-                ? "bg-purple-600 text-white shadow"
-                : "bg-white/5 text-slate-400"
-            }`}
-          >
-            <ImageIcon className="w-3.5 h-3.5" />
-            <span>Banners ({banners.length})</span>
-          </button>
-        </div>
       </header>
 
       {/* ========================================================================= */}
@@ -852,9 +826,14 @@ export default function AdminDashboardPage() {
                     )}
                   </div>
                   <h3 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                    <span>{providerProfile?.name || "KAS Reseller Partner"}</span>
+                    <span>
+                      {providerProfile?.name || "KAS Reseller Partner"}
+                    </span>
                     <span className="text-xs font-mono font-normal text-slate-400">
-                      ({providerProfile?.email || "tg_581867300@kasplay.kascambodia.com"})
+                      (
+                      {providerProfile?.email ||
+                        "tg_581867300@kasplay.kascambodia.com"}
+                      )
                     </span>
                   </h3>
                   <p className="text-xs text-slate-300 font-medium max-w-xl">
@@ -878,7 +857,9 @@ export default function AdminDashboardPage() {
                     </span>
                     <div className="text-3xl font-black text-emerald-400 font-mono">
                       {profileLoading && !providerProfile ? (
-                        <span className="text-base text-slate-400">Syncing...</span>
+                        <span className="text-base text-slate-400">
+                          Syncing...
+                        </span>
                       ) : (
                         `$${Number(providerProfile?.balanceUsd ?? 0).toFixed(2)} USD`
                       )}
@@ -891,7 +872,9 @@ export default function AdminDashboardPage() {
                           {providerProfile.apiKey.keyPrefix}
                         </span>
                         <span>•</span>
-                        <span>{providerProfile.apiKey.rateLimitPerMin} req/m</span>
+                        <span>
+                          {providerProfile.apiKey.rateLimitPerMin} req/m
+                        </span>
                       </div>
                     )}
                   </div>
@@ -987,7 +970,9 @@ export default function AdminDashboardPage() {
                   {providerProfile?.tier?.name || "Growth"} Tier Live
                 </div>
                 <div className="text-[11px] text-slate-400 mt-1 font-mono flex items-center justify-between">
-                  <span>{providerProfile?.apiKey?.keyPrefix || "kp_live_..."}</span>
+                  <span>
+                    {providerProfile?.apiKey?.keyPrefix || "kp_live_..."}
+                  </span>
                   <span className="text-slate-500">
                     {providerProfile?.apiKey?.rateLimitPerMin || 60} req/m
                   </span>
