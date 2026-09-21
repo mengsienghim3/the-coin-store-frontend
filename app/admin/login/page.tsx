@@ -3,7 +3,15 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Shield, Lock, Mail, ArrowLeft, Loader2, Sparkles, CheckCircle } from "lucide-react";
+import {
+  Shield,
+  Lock,
+  Mail,
+  ArrowLeft,
+  Loader2,
+  Sparkles,
+  CheckCircle,
+} from "lucide-react";
 import { adminLogin, setStoredAdmin, getStoredAdmin } from "../../../lib/api";
 
 export default function AdminLoginPage() {

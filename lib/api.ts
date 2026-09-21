@@ -414,6 +414,36 @@ export async function deleteBanner(id: string): Promise<void> {
     throw new Error(json.error?.message || "Failed to delete banner");
 }
 
+// --- Upload to Cloudflare R2 API ---
+export async function uploadImage(file: File): Promise<{
+  url: string;
+  key: string;
+  filename: string;
+  size: number;
+}> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const session = getStoredAdmin();
+  const headers: Record<string, string> = {};
+  if (session?.token) {
+    headers["Authorization"] = `Bearer ${session.token}`;
+  }
+
+  const res = await fetch(`${API_BASE_URL}/api/upload`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  const json = await res.json();
+  if (!res.ok) {
+    throw new Error(json.error?.message || "Failed to upload image to Cloudflare R2");
+  }
+
+  return json.data;
+}
+
 // --- Games API ---
 export async function fetchGames(): Promise<Game[]> {
   try {
@@ -468,4 +498,3 @@ export async function verifyAdminSession(
     return null;
   }
 }
-

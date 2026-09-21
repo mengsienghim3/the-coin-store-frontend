@@ -24,12 +24,24 @@ import {
   Smartphone,
   Monitor,
   Pencil,
+  Menu,
+  X,
+  UploadCloud,
+  TrendingUp,
+  DollarSign,
+  CreditCard,
+  BarChart3,
+  Clock,
+  ArrowUpRight,
+  Sparkles,
+  ShoppingBag,
 } from "lucide-react";
 import {
   fetchBanners,
   createBanner,
   updateBanner,
   deleteBanner,
+  uploadImage,
   getStoredAdmin,
   clearStoredAdmin,
   verifyAdminSession,
@@ -44,6 +56,22 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  // Primary Navigation View: 'banners' | 'sales'
+  const [adminView, setAdminView] = useState<"banners" | "sales">("banners");
+
+  // Hamburger Drawer state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Cloudflare R2 Upload states for Add modal
+  const [isUploadingR2, setIsUploadingR2] = useState(false);
+  const [uploadSuccessR2, setUploadSuccessR2] = useState(false);
+  const [uploadErrorR2, setUploadErrorR2] = useState<string | null>(null);
+
+  // Cloudflare R2 Upload states for Edit modal
+  const [isEditUploadingR2, setIsEditUploadingR2] = useState(false);
+  const [uploadEditSuccessR2, setUploadEditSuccessR2] = useState(false);
+  const [uploadEditErrorR2, setUploadEditErrorR2] = useState<string | null>(null);
 
   // Edit banner state
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
@@ -131,6 +159,41 @@ export default function AdminDashboardPage() {
       alert(err instanceof Error ? err.message : "Failed to delete banner");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (file: File, target: "new" | "edit") => {
+    if (!file) return;
+    if (target === "new") {
+      setIsUploadingR2(true);
+      setUploadErrorR2(null);
+      setUploadSuccessR2(false);
+      try {
+        const res = await uploadImage(file);
+        setNewImageUrl(res.url);
+        setUploadSuccessR2(true);
+      } catch (err: unknown) {
+        setUploadErrorR2(
+          err instanceof Error ? err.message : "Failed to upload image to Cloudflare R2",
+        );
+      } finally {
+        setIsUploadingR2(false);
+      }
+    } else {
+      setIsEditUploadingR2(true);
+      setUploadEditErrorR2(null);
+      setUploadEditSuccessR2(false);
+      try {
+        const res = await uploadImage(file);
+        setEditImageUrl(res.url);
+        setUploadEditSuccessR2(true);
+      } catch (err: unknown) {
+        setUploadEditErrorR2(
+          err instanceof Error ? err.message : "Failed to upload image to Cloudflare R2",
+        );
+      } finally {
+        setIsEditUploadingR2(false);
+      }
     }
   };
 
@@ -242,11 +305,181 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-[#07080f] text-slate-100 flex flex-col selection:bg-purple-500 selection:text-white pb-safe-nav md:pb-8">
       {/* ========================================================================= */}
+      {/* HAMBURGER SIDEBAR NAVIGATION DRAWER (Slide-out menu)                      */}
+      {/* ========================================================================= */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+          />
+
+          {/* Sliding Panel */}
+          <div className="relative w-full max-w-xs bg-[#0b0a1a] border-r border-white/10 shadow-2xl p-6 flex flex-col justify-between z-10 animate-in slide-in-from-left duration-300">
+            <div>
+              {/* Header */}
+              <div className="flex items-center justify-between pb-5 border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-500 to-amber-400 p-[1.5px] shadow-lg shadow-purple-500/20">
+                    <div className="w-full h-full rounded-[14px] bg-[#0e0c26] flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-purple-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-black text-sm text-white block leading-tight">
+                      THE COIN STORE
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wider text-purple-400 font-bold">
+                      Admin Hub
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Navigation Items */}
+              <div className="mt-6 space-y-6">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 block mb-2 font-mono">
+                    Core Workspace
+                  </span>
+                  <nav className="space-y-1.5">
+                    <button
+                      onClick={() => {
+                        setAdminView("sales");
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                        adminView === "sales"
+                          ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-600/30"
+                          : "text-slate-300 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <TrendingUp className="w-4 h-4" />
+                        <span>Sales Dashboard</span>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10">
+                        Home
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setAdminView("banners");
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                        adminView === "banners"
+                          ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-600/30"
+                          : "text-slate-300 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <ImageIcon className="w-4 h-4" />
+                        <span>Banner Control</span>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono">
+                        {banners.length}
+                      </span>
+                    </button>
+                  </nav>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 block mb-2 font-mono">
+                    Product Catalogs
+                  </span>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 bg-white/[0.02]">
+                      <div className="flex items-center gap-3">
+                        <ShoppingBag className="w-4 h-4 text-purple-400" />
+                        <span>Game Diamonds</span>
+                      </div>
+                      <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/20">
+                        Next
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 bg-white/[0.02]">
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="w-4 h-4 text-pink-400" />
+                        <span>Gift Cards</span>
+                      </div>
+                      <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 border border-pink-500/20">
+                        Next
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 block mb-2 font-mono">
+                    Storage & Cloudflare Edge
+                  </span>
+                  <div className="px-3.5 py-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">R2 Bucket</span>
+                      <span className="text-emerald-400 font-bold flex items-center gap-1.5 font-mono text-[11px]">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        the-coin-store
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">D1 SQLite</span>
+                      <span className="text-purple-300 font-mono text-[11px]">
+                        the_coin_dev (12ms)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="pt-5 border-t border-white/10 space-y-2.5">
+              <Link
+                href="/"
+                target="_blank"
+                className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 flex items-center justify-center gap-2 transition-colors"
+              >
+                <Store className="w-4 h-4 text-purple-400" />
+                Live Customer Store
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="w-full py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-xs font-semibold text-red-400 flex items-center justify-center gap-2 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
       {/* 1. DESKTOP HEADER (`hidden md:flex`)                                      */}
       {/* ========================================================================= */}
-      <header className="hidden md:block sticky top-0 z-40 bg-[#0e111a]/90 backdrop-blur-xl border-b border-white/10 px-8 py-4 shadow-xl">
+      <header className="hidden md:block sticky top-0 z-40 bg-[#0e111a]/90 backdrop-blur-xl border-b border-white/10 px-8 py-3.5 shadow-xl">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            {/* Hamburger Button */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white flex items-center gap-2 transition-all active:scale-95 group shadow-sm"
+              title="Open Navigation Menu"
+            >
+              <Menu className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold tracking-wide">Menu</span>
+            </button>
+
             <div className="w-10 h-10 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
               <Shield className="w-5 h-5" />
             </div>
@@ -263,6 +496,32 @@ export default function AdminDashboardPage() {
                 {admin.email}
               </span>
             </div>
+          </div>
+
+          {/* Desktop Center View Switcher */}
+          <div className="flex items-center bg-white/5 p-1 rounded-2xl border border-white/10">
+            <button
+              onClick={() => setAdminView("sales")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                adminView === "sales"
+                  ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-md shadow-purple-600/30"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>Sales Dashboard</span>
+            </button>
+            <button
+              onClick={() => setAdminView("banners")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                adminView === "banners"
+                  ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-md shadow-purple-600/30"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+              <span>Banners ({banners.length})</span>
+            </button>
           </div>
 
           <div className="flex items-center gap-3">
@@ -291,12 +550,21 @@ export default function AdminDashboardPage() {
       <header className="md:hidden sticky top-0 z-40 pt-safe bg-[#0d0a27]/95 backdrop-blur-xl border-b border-white/10 px-4 pb-3">
         <div className="flex items-center justify-between h-14">
           <div className="flex items-center gap-2.5">
+            {/* Mobile Hamburger Button */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-xl bg-white/5 border border-white/10 text-purple-300 active:scale-95"
+              title="Open Navigation Menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
             <div className="w-9 h-9 rounded-xl bg-purple-600/25 border border-purple-500/40 flex items-center justify-center text-purple-300">
               <Shield className="w-4 h-4" />
             </div>
             <div>
               <h1 className="font-black text-sm text-white leading-tight">
-                Admin Portal
+                {adminView === "sales" ? "Sales Overview" : "Banner Control"}
               </h1>
               <span className="text-[10px] text-purple-300 block font-mono leading-none">
                 Reseller Control
@@ -315,47 +583,41 @@ export default function AdminDashboardPage() {
                 className={`w-4 h-4 ${loading ? "animate-spin text-purple-400" : ""}`}
               />
             </button>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-purple-600/30 active:scale-95 transition-all"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add</span>
-            </button>
+            {adminView === "banners" && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-purple-600/30 active:scale-95 transition-all"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* Mobile View Selector Chips */}
         <div className="flex items-center gap-2 mt-1 pt-2 border-t border-white/5">
           <button
-            onClick={() => setMobileView("banners")}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
-              mobileView === "banners"
+            onClick={() => setAdminView("sales")}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 ${
+              adminView === "sales"
                 ? "bg-purple-600 text-white shadow"
                 : "bg-white/5 text-slate-400"
             }`}
           >
-            Banners ({banners.length})
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>Sales</span>
           </button>
           <button
-            onClick={() => setMobileView("providers")}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
-              mobileView === "providers"
+            onClick={() => setAdminView("banners")}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 ${
+              adminView === "banners"
                 ? "bg-purple-600 text-white shadow"
                 : "bg-white/5 text-slate-400"
             }`}
           >
-            Providers
-          </button>
-          <button
-            onClick={() => setMobileView("overview")}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
-              mobileView === "overview"
-                ? "bg-purple-600 text-white shadow"
-                : "bg-white/5 text-slate-400"
-            }`}
-          >
-            Overview
+            <ImageIcon className="w-3.5 h-3.5" />
+            <span>Banners ({banners.length})</span>
           </button>
         </div>
       </header>
@@ -364,101 +626,162 @@ export default function AdminDashboardPage() {
       {/* 3. MAIN CONTENT CONTAINER (Responsive for Desktop & Mobile)               */}
       {/* ========================================================================= */}
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
-        {/* Desktop Overview Telemetry Cards (Or on Mobile when Overview is selected) */}
-        <div
-          className={`grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 ${
-            mobileView === "overview" ? "grid" : "hidden md:grid"
-          }`}
-        >
-          <div className="rounded-2xl bg-[#0e111a] border border-white/10 p-5 md:p-6 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-slate-400 block mb-1 uppercase tracking-wider font-medium">
-                Active Banners
-              </span>
-              <span className="text-2xl md:text-3xl font-black text-white">
-                {activeCount}{" "}
-                <span className="text-sm font-normal text-slate-500">
-                  / {banners.length} total
-                </span>
-              </span>
-            </div>
-            <div className="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-              <ImageIcon className="w-5 h-5" />
-            </div>
-          </div>
+        {/* ======================================================================= */}
+        {/* 1. SALES DASHBOARD VIEW (Shown when adminView === 'sales')              */}
+        {/* ======================================================================= */}
+        {adminView === "sales" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            {/* Hero Sales Overview Banner */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-950/70 via-[#130f2c] to-[#0c0a1a] border border-purple-500/20 p-6 md:p-8 shadow-2xl">
+              <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-[11px] font-bold text-purple-300 mb-3">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Reseller Telemetry Engine Active</span>
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+                    Sales & Operations Dashboard
+                  </h2>
+                  <p className="text-xs md:text-sm text-slate-400 mt-1 max-w-xl">
+                    Live monitoring of digital diamond reloads, payment processing, and promotional campaign distribution.
+                  </p>
+                </div>
 
-          <div className="rounded-2xl bg-[#0e111a] border border-white/10 p-5 md:p-6 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-slate-400 block mb-1 uppercase tracking-wider font-medium">
-                Reseller Service
-              </span>
-              <span className="text-sm font-bold text-emerald-400 flex items-center gap-1.5 mt-1">
-                <Zap className="w-4 h-4 text-emerald-400" />
-                API Gateway Ready
-              </span>
-              <span className="text-[10px] text-slate-500 font-mono">
-                0.2s Dispatch Queue
-              </span>
-            </div>
-            <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <Server className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="rounded-2xl bg-[#0e111a] border border-white/10 p-5 md:p-6 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-slate-400 block mb-1 uppercase tracking-wider font-medium">
-                Aggregator Pipeline
-              </span>
-              <span className="text-xs text-slate-300 font-semibold block mt-1">
-                Automated Bot Dispatch
-              </span>
-              <span className="text-[10px] text-purple-300 font-mono">
-                Provider Webhooks Active
-              </span>
-            </div>
-            <div className="w-11 h-11 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400">
-              <Layers className="w-5 h-5" />
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Provider View (Shown when 'providers' is selected on mobile) */}
-        {mobileView === "providers" && (
-          <div className="md:hidden space-y-4">
-            <div className="rounded-2xl bg-[#0e111a] border border-white/10 p-5 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-bold text-white">
-                <Server className="w-4 h-4 text-purple-400" />
-                <span>Connected Reseller Providers</span>
+                <button
+                  onClick={() => setAdminView("banners")}
+                  className="px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-95 text-white font-bold text-xs flex items-center gap-2 shadow-xl shadow-purple-600/30 transition-all active:scale-98"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                  <span>Manage Store Banners ({banners.length})</span>
+                  <ArrowUpRight className="w-4 h-4" />
+                </button>
               </div>
-              <p className="text-xs text-slate-400">
-                Backend is configured to dispatch incoming diamond reload orders
-                directly to top-up aggregators.
-              </p>
-              <div className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Status</span>
-                  <span className="text-emerald-400 font-bold">
-                    Online & Active
+            </div>
+
+            {/* KPI Metrics Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+              <div className="rounded-2xl bg-[#0e111a] border border-white/10 p-5 shadow-xl">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                    Gross Sales
+                  </span>
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <DollarSign className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="text-2xl font-black text-white">$14,892.40</div>
+                <div className="flex items-center gap-1 text-[11px] text-emerald-400 mt-1">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  <span>+24.8% vs last week</span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-[#0e111a] border border-white/10 p-5 shadow-xl">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                    Reload Orders
+                  </span>
+                  <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                    <ShoppingBag className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="text-2xl font-black text-white">1,280 Orders</div>
+                <div className="flex items-center gap-1 text-[11px] text-purple-300 mt-1">
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Instant auto-fulfillment</span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-[#0e111a] border border-white/10 p-5 shadow-xl">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                    Active Promos
+                  </span>
+                  <div className="w-9 h-9 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400">
+                    <ImageIcon className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="text-2xl font-black text-white">
+                  {activeCount}{" "}
+                  <span className="text-xs font-normal text-slate-500">
+                    / {banners.length} total
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Average Latency</span>
-                  <span className="text-purple-300 font-mono">180ms</span>
+                <button
+                  onClick={() => setAdminView("banners")}
+                  className="text-[11px] text-purple-400 hover:text-purple-300 font-semibold mt-1 inline-flex items-center gap-1"
+                >
+                  <span>Open banner editor</span>
+                  <ArrowUpRight className="w-3 h-3" />
+                </button>
+              </div>
+
+              <div className="rounded-2xl bg-[#0e111a] border border-white/10 p-5 shadow-xl">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                    Provider Gateway
+                  </span>
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                    <Server className="w-4 h-4" />
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Auto-Retry Failover</span>
-                  <span className="text-slate-300 font-bold">Enabled</span>
+                <div className="text-sm font-black text-emerald-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  100% Operational
                 </div>
+                <div className="text-[11px] text-slate-500 mt-1 font-mono">
+                  Avg dispatch: 1.8s
+                </div>
+              </div>
+            </div>
+
+            {/* Live Top-Up Stream */}
+            <div className="rounded-3xl bg-[#0e111a] border border-white/10 p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-purple-400" />
+                    Live Top-Up Transaction Feed
+                  </h3>
+                  <p className="text-xs text-slate-400">Recent diamond deliveries handled through the reseller gateway</p>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-bold text-emerald-300">
+                  Bakong KHQR Active
+                </span>
+              </div>
+
+              <div className="divide-y divide-white/5 text-xs">
+                {[
+                  { id: "ORD-9921", game: "Mobile Legends", item: "514 Diamonds", user: "ML-789212 (2091)", price: "$9.50", time: "2 min ago", status: "Completed" },
+                  { id: "ORD-9920", game: "Free Fire", item: "1,080 Diamonds", user: "FF-89912041", price: "$10.00", time: "5 min ago", status: "Completed" },
+                  { id: "ORD-9919", game: "PUBG Mobile", item: "660 UC", user: "PUBG-5192831", price: "$9.99", time: "11 min ago", status: "Completed" },
+                  { id: "ORD-9918", game: "Steam Wallet", item: "$10 USD Code", user: "customer@gmail.com", price: "$10.00", time: "18 min ago", status: "Delivered" },
+                ].map((t) => (
+                  <div key={t.id} className="py-3 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center font-mono text-[10px] text-slate-300">
+                        {t.id.split("-")[1]}
+                      </div>
+                      <div>
+                        <span className="font-bold text-white block">{t.game}</span>
+                        <span className="text-[11px] text-slate-400">{t.item} • {t.user}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-black text-white block">{t.price}</span>
+                      <span className="text-[10px] text-emerald-400 font-semibold">{t.status} • {t.time}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         )}
 
         {/* ======================================================================= */}
-        {/* BANNER MANAGEMENT SECTION (Default on Desktop, shown on Mobile 'banners')*/}
+        {/* 2. BANNER MANAGEMENT SECTION (Shown when adminView === 'banners')       */}
         {/* ======================================================================= */}
-        {(mobileView === "banners" || typeof window === "undefined") && (
+        {adminView === "banners" && (
           <section className="space-y-4">
             {/* Header & Filter Toolbar */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -668,30 +991,30 @@ export default function AdminDashboardPage() {
       {/* ========================================================================= */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 pb-safe bg-[#0a081e]/95 backdrop-blur-2xl border-t border-white/10 shadow-2xl">
         <div className="flex items-center justify-around h-16 px-2">
+          {/* Sales Tab */}
+          <button
+            onClick={() => setAdminView("sales")}
+            className={`flex flex-col items-center justify-center flex-1 py-1 gap-1 transition-colors ${
+              adminView === "sales"
+                ? "text-purple-400 font-bold"
+                : "text-slate-400"
+            }`}
+          >
+            <TrendingUp className="w-5 h-5" />
+            <span className="text-[10px]">Sales</span>
+          </button>
+
           {/* Banners Tab */}
           <button
-            onClick={() => setMobileView("banners")}
+            onClick={() => setAdminView("banners")}
             className={`flex flex-col items-center justify-center flex-1 py-1 gap-1 transition-colors ${
-              mobileView === "banners"
+              adminView === "banners"
                 ? "text-purple-400 font-bold"
                 : "text-slate-400"
             }`}
           >
             <ImageIcon className="w-5 h-5" />
             <span className="text-[10px]">Banners</span>
-          </button>
-
-          {/* Providers Tab */}
-          <button
-            onClick={() => setMobileView("providers")}
-            className={`flex flex-col items-center justify-center flex-1 py-1 gap-1 transition-colors ${
-              mobileView === "providers"
-                ? "text-purple-400 font-bold"
-                : "text-slate-400"
-            }`}
-          >
-            <Server className="w-5 h-5" />
-            <span className="text-[10px]">Providers</span>
           </button>
 
           {/* Live Storefront Link */}
@@ -760,18 +1083,87 @@ export default function AdminDashboardPage() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  Image URL * (16:9 ratio recommended)
+                  Banner Image *
                 </label>
-                <input
-                  type="url"
-                  required
-                  value={newImageUrl}
-                  onChange={(e) => setNewImageUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
-                />
+
+                {/* Cloudflare R2 Upload Dropzone */}
+                <div className="relative border-2 border-dashed border-white/15 hover:border-purple-500/50 rounded-2xl p-4 bg-white/[0.02] text-center transition-all mb-3">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file, "new");
+                    }}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                    disabled={isUploadingR2}
+                  />
+                  <div className="flex flex-col items-center justify-center pointer-events-none">
+                    {isUploadingR2 ? (
+                      <>
+                        <Loader2 className="w-7 h-7 text-purple-400 animate-spin mb-2" />
+                        <span className="text-xs font-bold text-white">
+                          Uploading image to Cloudflare R2...
+                        </span>
+                        <span className="text-[10px] text-slate-400 mt-0.5">
+                          Storing in R2 bucket
+                        </span>
+                      </>
+                    ) : uploadSuccessR2 ? (
+                      <>
+                        <CheckCircle className="w-7 h-7 text-emerald-400 mb-1.5" />
+                        <span className="text-xs font-bold text-emerald-300">
+                          Successfully Uploaded to R2!
+                        </span>
+                        <span className="text-[10px] text-slate-400 mt-0.5">
+                          Click or drag another image to replace
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-2">
+                          <UploadCloud className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-bold text-white">
+                          Upload image to Cloudflare R2
+                        </span>
+                        <span className="text-[11px] text-slate-400 mt-0.5">
+                          Drag & drop or browse device (PNG, JPG, WEBP, GIF)
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {uploadErrorR2 && (
+                  <p className="mb-2 text-[11px] text-red-400">{uploadErrorR2}</p>
+                )}
+
+                {/* Direct Image URL fallback or edit */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                    <span>Or image URL:</span>
+                    {uploadSuccessR2 && (
+                      <span className="text-emerald-400 font-mono text-[10px]">
+                        ✓ R2 Hosted
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="url"
+                    required
+                    value={newImageUrl}
+                    onChange={(e) => {
+                      setNewImageUrl(e.target.value);
+                      setUploadSuccessR2(false);
+                    }}
+                    placeholder="https://... or uploaded R2 URL"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
+                  />
+                </div>
+
                 {newImageUrl && (
-                  <div className="mt-2.5 relative aspect-[16/9] w-full rounded-xl bg-black/60 border border-white/10 overflow-hidden">
+                  <div className="mt-2.5 relative aspect-[16/9] w-full rounded-xl bg-black/60 border border-white/10 overflow-hidden shadow-inner">
                     <img
                       src={newImageUrl}
                       alt="Banner Preview"
@@ -888,17 +1280,89 @@ export default function AdminDashboardPage() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  Image URL *
+                  Banner Image *
                 </label>
-                <input
-                  type="url"
-                  required
-                  value={editImageUrl}
-                  onChange={(e) => setEditImageUrl(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
-                />
+
+                {/* Cloudflare R2 Upload Dropzone */}
+                <div className="relative border-2 border-dashed border-white/15 hover:border-purple-500/50 rounded-2xl p-4 bg-white/[0.02] text-center transition-all mb-3">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file, "edit");
+                    }}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                    disabled={isEditUploadingR2}
+                  />
+                  <div className="flex flex-col items-center justify-center pointer-events-none">
+                    {isEditUploadingR2 ? (
+                      <>
+                        <Loader2 className="w-7 h-7 text-purple-400 animate-spin mb-2" />
+                        <span className="text-xs font-bold text-white">
+                          Uploading new image to Cloudflare R2...
+                        </span>
+                        <span className="text-[10px] text-slate-400 mt-0.5">
+                          Replacing in R2 bucket
+                        </span>
+                      </>
+                    ) : uploadEditSuccessR2 ? (
+                      <>
+                        <CheckCircle className="w-7 h-7 text-emerald-400 mb-1.5" />
+                        <span className="text-xs font-bold text-emerald-300">
+                          New Image Uploaded to R2!
+                        </span>
+                        <span className="text-[10px] text-slate-400 mt-0.5">
+                          Click or drag another image to replace
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-2">
+                          <UploadCloud className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-bold text-white">
+                          Upload new image to Cloudflare R2
+                        </span>
+                        <span className="text-[11px] text-slate-400 mt-0.5">
+                          Drag & drop or browse device (PNG, JPG, WEBP, GIF)
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {uploadEditErrorR2 && (
+                  <p className="mb-2 text-[11px] text-red-400">
+                    {uploadEditErrorR2}
+                  </p>
+                )}
+
+                {/* Direct Image URL fallback or edit */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                    <span>Or image URL:</span>
+                    {uploadEditSuccessR2 && (
+                      <span className="text-emerald-400 font-mono text-[10px]">
+                        ✓ R2 Hosted
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="url"
+                    required
+                    value={editImageUrl}
+                    onChange={(e) => {
+                      setEditImageUrl(e.target.value);
+                      setUploadEditSuccessR2(false);
+                    }}
+                    placeholder="https://... or uploaded R2 URL"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
+                  />
+                </div>
+
                 {editImageUrl && (
-                  <div className="mt-2.5 relative aspect-[16/9] w-full rounded-xl bg-black/60 border border-white/10 overflow-hidden">
+                  <div className="mt-2.5 relative aspect-[16/9] w-full rounded-xl bg-black/60 border border-white/10 overflow-hidden shadow-inner">
                     <img
                       src={editImageUrl}
                       alt="Banner Preview"
