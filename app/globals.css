@@ -2,13 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light dark;
-  --background: #090a0f;
-  --foreground: #f4f4f6;
-  --card-bg: #13151f;
-  --card-border: #232736;
-  --accent: #f59e0b;
+@layer base {
+  :root {
+    --background: 230 35% 4%;
+    --foreground: 210 40% 98%;
+
+    --card: 230 30% 6%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 230 30% 6%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 38 92% 50%;
+    --primary-foreground: 230 35% 4%;
+
+    --secondary: 228 20% 12%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 228 20% 12%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 199 89% 48%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 228 20% 16%;
+    --input: 228 20% 16%;
+    --ring: 38 92% 50%;
+
+    --radius: 0.75rem;
+  }
 }
 
 * {
@@ -17,8 +42,8 @@
 
 body {
   margin: 0;
-  background: var(--background);
-  color: var(--foreground);
+  background-color: #07080c;
+  color: #f1f5f9;
   font-family:
     "Noto Sans Khmer Variable",
     system-ui,
@@ -28,11 +53,62 @@ body {
     Roboto,
     sans-serif;
   min-height: 100vh;
+  /* Carbon fiber subtle texture */
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 100% 50%, rgba(56, 189, 248, 0.05) 0%, transparent 35%),
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
+/* Sapphire crystal glassmorphism */
+.glass-sapphire {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-sapphire-card {
+  background: linear-gradient(145deg, rgba(16, 20, 32, 0.85) 0%, rgba(8, 10, 16, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-sapphire-card:hover {
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.2), 0 0 20px -5px rgba(56, 189, 248, 0.15);
+}
+
+/* Bugatti aerodynamic C-line ambient glow */
+.aero-glow-amber {
+  box-shadow: 0 0 40px -10px rgba(245, 158, 11, 0.25);
+}
+
+.aero-glow-cyan {
+  box-shadow: 0 0 40px -10px rgba(56, 189, 248, 0.25);
+}
+
+/* Metallic tachometer text gradient */
+.text-tachometer {
+  background: linear-gradient(135deg, #fef08a 0%, #f59e0b 50%, #d97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-titanium {
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Hide scrollbars cleanly */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

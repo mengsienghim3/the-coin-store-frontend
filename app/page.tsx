@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Gamepad2,
   Sparkles,
@@ -12,36 +12,42 @@ import {
   ChevronRight,
   Headphones,
   CreditCard,
-  Shield,
   ArrowUpRight,
   Flame,
-} from "lucide-react";
-import { fetchBanners, fetchGames, Banner, Game } from "../lib/api";
+  Activity,
+  Gauge,
+  Layers,
+} from 'lucide-react';
+import { fetchBanners, fetchGames, Banner, Game } from '../lib/api';
+import { TourbillonGauge } from '../components/tourbillon-gauge';
+import { QuickTopupModal } from '../components/quick-topup-modal';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Card } from '../components/ui/card';
 
 export default function StoreHomePage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGameForTopup, setSelectedGameForTopup] = useState<Game | null>(null);
 
   useEffect(() => {
-    Promise.all([fetchBanners(), fetchGames()]).then(
-      ([bannerData, gameData]) => {
-        setBanners(bannerData);
-        setGames(gameData);
-        setLoading(false);
-      },
-    );
+    Promise.all([fetchBanners(), fetchGames()]).then(([bannerData, gameData]) => {
+      setBanners(bannerData);
+      setGames(gameData);
+      setLoading(false);
+    });
   }, []);
 
-  // Auto-rotate hero banners every 5 seconds
+  // Auto-rotate hero banners every 6 seconds
   useEffect(() => {
     if (banners.length <= 1) return;
     const interval = setInterval(() => {
       setActiveBannerIndex((prev) => (prev + 1) % banners.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(interval);
   }, [banners.length]);
 
@@ -52,14 +58,12 @@ export default function StoreHomePage() {
 
   const prevBanner = () => {
     if (banners.length === 0) return;
-    setActiveBannerIndex(
-      (prev) => (prev - 1 + banners.length) % banners.length,
-    );
+    setActiveBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
   };
 
   const filteredGames = games.filter((game) => {
     const matchesCategory =
-      selectedCategory === "all" ||
+      selectedCategory === 'all' ||
       game.category.toLowerCase() === selectedCategory.toLowerCase();
     const matchesSearch =
       game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -68,30 +72,37 @@ export default function StoreHomePage() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#07080e] text-slate-100 selection:bg-amber-500 selection:text-slate-950">
-      {/* Top Announcement Bar */}
-      <div className="bg-gradient-to-r from-amber-600/20 via-yellow-500/20 to-amber-600/20 border-b border-amber-500/20 py-2 px-4 text-center text-xs font-semibold text-amber-300 flex items-center justify-center gap-2">
+    <div className="min-h-screen flex flex-col bg-[#07080c] text-slate-100 selection:bg-amber-500 selection:text-slate-950">
+      {/* Top Tachometer Announcement Bar */}
+      <div className="bg-gradient-to-r from-amber-600/15 via-yellow-500/20 to-cyan-500/15 border-b border-white/10 py-2 px-4 text-center text-xs font-semibold text-amber-300 flex items-center justify-center gap-2 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer-aero" />
         <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400 animate-pulse" />
-        <span>
-          Instant Automated Game Diamond Delivery — Direct Reseller Provider
-          Connection
+        <span className="font-mono tracking-wide">
+          BUGATTI TOURBILLON ENGINE SPEED: 9,000 RPM AUTOMATED GAME DIAMOND DISPATCH
         </span>
       </div>
 
-      {/* Main Header / Navigation */}
-      <header className="sticky top-0 z-40 bg-[#0c0e17]/90 backdrop-blur-md border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-lg shadow-amber-500/25 group-hover:scale-105 transition-transform">
-              <Gamepad2 className="w-6 h-6 text-slate-950 stroke-[2.5]" />
+      {/* Main Titanium Navigation */}
+      <header className="sticky top-0 z-40 bg-[#0a0d14]/90 backdrop-blur-xl border-b border-white/10 shadow-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-3.5 group">
+            {/* Logo Hub with Tourbillon Ring */}
+            <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 p-[1.5px] shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform duration-300">
+              <div className="w-full h-full rounded-[14px] bg-[#0c0e17] flex items-center justify-center">
+                <Gamepad2 className="w-6 h-6 text-amber-400 stroke-[2.2]" />
+              </div>
+              <div className="absolute -inset-0.5 rounded-2xl border border-amber-400/40 animate-pulse pointer-events-none" />
             </div>
             <div>
-              <span className="text-lg font-black tracking-tight text-white block leading-none">
+              <span className="text-lg font-black tracking-tight text-white block leading-none font-mono">
                 THE COIN STORE
               </span>
-              <span className="text-[10px] uppercase tracking-widest text-amber-400 font-bold">
-                Game Diamond Reseller
-              </span>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                <span className="text-[10px] uppercase tracking-widest text-tachometer font-extrabold">
+                  Tourbillon Reseller Edition
+                </span>
+              </div>
             </div>
           </Link>
 
@@ -103,36 +114,35 @@ export default function StoreHomePage() {
               placeholder="Search Mobile Legends, Free Fire, PUBG..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/50 transition-all"
+              className="w-full bg-white/[0.04] border border-white/10 rounded-full pl-10 pr-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400/60 focus:ring-1 focus:ring-amber-400/60 transition-all font-sans"
             />
           </div>
 
-          {/* Header Actions */}
+          {/* Header Action: 24/7 VIP Concierge */}
           <div className="flex items-center gap-3">
-            <a
-              href="#support"
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 hover:text-amber-400 transition-colors"
+            <Button
+              variant="hypercar"
+              size="sm"
+              className="gap-2 rounded-full"
+              onClick={() => alert('VIP Concierge Support: 24/7 Telegram & Live Agent Ready')}
             >
-              <Headphones className="w-3.5 h-3.5 text-amber-400" />
-              24/7 Support
-            </a>
+              <Headphones className="w-3.5 h-3.5 text-cyan-400" />
+              VIP Support
+            </Button>
           </div>
         </div>
       </header>
 
-      {/* Main Content Body */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
-        {/* Dynamic Promotional Banner Carousel (Banner API) */}
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-10">
+        {/* Dynamic Promotional Banner Carousel */}
         {banners.length > 0 && (
-          <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl mb-10 group bg-slate-950 aspect-[21/9] sm:aspect-[24/9] max-h-[380px]">
-            {/* Banner Image Slides */}
+          <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl group bg-slate-950 aspect-[21/9] sm:aspect-[24/9] max-h-[380px]">
             {banners.map((banner, index) => (
               <div
                 key={banner.id}
                 className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                  index === activeBannerIndex
-                    ? "opacity-100 z-10"
-                    : "opacity-0 z-0 pointer-events-none"
+                  index === activeBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
                 }`}
               >
                 <img
@@ -140,11 +150,12 @@ export default function StoreHomePage() {
                   alt={banner.title}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#07080c] via-[#07080c]/40 to-transparent" />
                 <div className="absolute bottom-6 left-6 sm:bottom-10 sm:left-10 z-20 max-w-xl">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[10px] font-bold uppercase tracking-wider mb-2 backdrop-blur-md">
-                    <Sparkles className="w-3 h-3" /> Special Promo
-                  </div>
+                  <Badge variant="tourbillon" className="gap-1.5 mb-2.5">
+                    <Sparkles className="w-3 h-3 text-amber-400" />
+                    Special Promotion
+                  </Badge>
                   <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight drop-shadow-md">
                     {banner.title}
                   </h2>
@@ -152,19 +163,19 @@ export default function StoreHomePage() {
               </div>
             ))}
 
-            {/* Carousel Navigation Arrows */}
+            {/* Navigation Arrows */}
             {banners.length > 1 && (
               <>
                 <button
                   onClick={prevBanner}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                   aria-label="Previous banner"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
                   onClick={nextBanner}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                   aria-label="Next banner"
                 >
                   <ChevronRight className="w-5 h-5" />
@@ -172,17 +183,15 @@ export default function StoreHomePage() {
               </>
             )}
 
-            {/* Pagination Indicators */}
+            {/* Tachometer Indicator Dots */}
             {banners.length > 1 && (
-              <div className="absolute bottom-4 right-6 z-20 flex items-center gap-1.5">
+              <div className="absolute bottom-4 right-6 z-20 flex items-center gap-2">
                 {banners.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setActiveBannerIndex(i)}
-                    className={`h-1.5 rounded-full transition-all ${
-                      i === activeBannerIndex
-                        ? "w-6 bg-amber-400"
-                        : "w-2 bg-white/30"
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      i === activeBannerIndex ? 'w-8 bg-amber-400 shadow-md shadow-amber-400/50' : 'w-2 bg-white/30'
                     }`}
                     aria-label={`Slide ${i + 1}`}
                   />
@@ -192,162 +201,146 @@ export default function StoreHomePage() {
           </div>
         )}
 
-        {/* Feature / Value Badges */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-          <div className="p-4 rounded-2xl bg-[#0e111a] border border-white/5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <Zap className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-white">Instant Reload</div>
-              <div className="text-[11px] text-slate-400">
-                Automated provider delivery
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-[#0e111a] border border-white/5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-white">100% Secure</div>
-              <div className="text-[11px] text-slate-400">
-                No game password required
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-[#0e111a] border border-white/5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-              <CreditCard className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-white">Local Payment</div>
-              <div className="text-[11px] text-slate-400">
-                KHQR, ABA & Bakong
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-[#0e111a] border border-white/5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-              <Headphones className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-white">24/7 Support</div>
-              <div className="text-[11px] text-slate-400">
-                Always online assistance
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Bugatti Tourbillon Horology Gauge Widget */}
+        <TourbillonGauge />
 
         {/* Game Catalog Section */}
-        <section id="games" className="mb-12">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <section id="games" className="pt-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
             <div>
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                <Flame className="w-6 h-6 text-amber-500 fill-amber-500" />
-                Popular Game Top-Up
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Select your game to top-up diamonds, vouchers, or battle passes
-                instantly
+              <div className="flex items-center gap-2 mb-1">
+                <Flame className="w-5 h-5 text-amber-500 fill-amber-500 animate-pulse" />
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-mono">
+                  POPULAR TOP-UP
+                </h2>
+              </div>
+              <p className="text-xs text-slate-400">
+                Instant delivery directly to your game ID via automated provider APIs
               </p>
             </div>
 
-            {/* Category Filter Chips */}
+            {/* Category Filter Chips with Animated Indicators */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
-              {["all", "MOBA", "Battle Royale", "RPG"].map((cat) => (
+              {['all', 'MOBA', 'Battle Royale', 'RPG'].map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                     selectedCategory === cat
-                      ? "bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20"
-                      : "bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5"
+                      ? 'bg-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/25 scale-105'
+                      : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5'
                   }`}
                 >
-                  {cat === "all" ? "All Games" : cat}
+                  {cat === 'all' ? 'All Games' : cat}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Game Cards Grid (Dalin Store style) */}
+          {/* Game Cards Grid (Hypercar Instrument Cards) */}
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  className="aspect-[3/4] rounded-2xl bg-white/5 animate-pulse"
-                />
+                <div key={i} className="aspect-[3/4] rounded-3xl bg-white/5 animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
               {filteredGames.map((game) => (
-                <div
+                <Card
                   key={game.id}
-                  className="group relative rounded-2xl bg-[#0e111a] hover:bg-[#151926] border border-white/10 hover:border-amber-500/50 p-3 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 shadow-xl overflow-hidden cursor-pointer"
-                  onClick={() =>
-                    alert(
-                      `Top up for ${game.name} will connect to the reseller provider order form!`,
-                    )
-                  }
+                  className="group relative bg-[#0d101a] hover:bg-[#131828] border-white/10 hover:border-amber-400/60 p-3.5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-2xl cursor-pointer overflow-hidden"
+                  onClick={() => setSelectedGameForTopup(game)}
                 >
-                  {/* Game Artwork */}
-                  <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-900 mb-3 border border-white/5">
-                    <img
-                      src={game.imageUrl}
-                      alt={game.name}
-                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
-                    />
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 font-extrabold text-[9px] uppercase tracking-wider shadow-md">
-                      Instant
-                    </div>
-                  </div>
+                  {/* Subtle aero glow corner indicator */}
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/0 group-hover:bg-amber-500/15 rounded-bl-full transition-all duration-500 pointer-events-none" />
 
                   <div>
-                    <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider block">
+                    {/* Game Artwork Thumbnail */}
+                    <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-950 mb-3 border border-white/10 shadow-inner">
+                      <img
+                        src={game.imageUrl}
+                        alt={game.name}
+                        className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                      />
+                      <Badge
+                        variant="tourbillon"
+                        className="absolute top-2 left-2 text-[9px] px-2 py-0.5"
+                      >
+                        ⚡ 0.2s Dispatch
+                      </Badge>
+                    </div>
+
+                    <span className="text-[10px] font-mono text-cyan-400/90 uppercase tracking-widest block mb-0.5">
                       {game.publisher}
                     </span>
-                    <h3 className="font-bold text-white text-sm line-clamp-1 group-hover:text-amber-300 transition-colors">
+                    <h3 className="font-extrabold text-white text-sm line-clamp-1 group-hover:text-amber-300 transition-colors">
                       {game.name}
                     </h3>
                   </div>
 
-                  <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-xs">
-                    <span className="text-slate-400 text-[11px]">
-                      {game.category}
-                    </span>
-                    <span className="text-amber-400 font-bold flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
-                      Top-Up <ArrowUpRight className="w-3.5 h-3.5" />
+                  <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                    <span className="text-slate-400 text-[11px] font-mono">{game.category}</span>
+                    <span className="text-amber-400 font-bold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                      Reload <ArrowUpRight className="w-3.5 h-3.5" />
                     </span>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}
         </section>
+
+        {/* Hypercar Performance & Security Pillars */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+          <Card className="p-6 bg-gradient-to-br from-[#0c0f18] to-[#07090e] border-white/10">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-4">
+              <Zap className="w-6 h-6" />
+            </div>
+            <h4 className="font-bold text-white text-base mb-1">9,000 RPM Injection</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Automated provider API gateway dispatches diamonds into your game account in seconds.
+            </p>
+          </Card>
+
+          <Card className="p-6 bg-gradient-to-br from-[#0c0f18] to-[#07090e] border-white/10">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <h4 className="font-bold text-white text-base mb-1">Zero-Password Top-Up</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Only your Player ID & Zone ID are needed. Your account credentials stay 100% private.
+            </p>
+          </Card>
+
+          <Card className="p-6 bg-gradient-to-br from-[#0c0f18] to-[#07090e] border-white/10">
+            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mb-4">
+              <CreditCard className="w-6 h-6" />
+            </div>
+            <h4 className="font-bold text-white text-base mb-1">Cambodian Local Rail</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Direct checkout support for Bakong KHQR, ABA Pay, and international cards.
+            </p>
+          </Card>
+        </section>
       </main>
 
-      {/* Footer */}
-      <footer className="mt-16 border-t border-white/10 bg-[#090b12] py-10">
+      {/* Quick Top-Up Modal (Interactive Cockpit) */}
+      <QuickTopupModal
+        game={selectedGameForTopup}
+        onClose={() => setSelectedGameForTopup(null)}
+      />
+
+      {/* Titanium Minimalist Footer */}
+      <footer className="mt-20 border-t border-white/10 bg-[#06080d] py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-500">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400">
-              <Gamepad2 className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400 font-mono font-black text-xs">
+              BUG
             </div>
             <div>
-              <p className="font-bold text-slate-300">
-                The Coin Store — Reseller Platform
-              </p>
-              <p className="text-[11px]">
-                All game titles and trademarks are property of their respective
-                owners.
-              </p>
+              <p className="font-bold text-slate-300">The Coin Store — Tourbillon Reseller Edition</p>
+              <p className="text-[11px]">All game trademarks belong to their respective publishers.</p>
             </div>
           </div>
 
@@ -358,11 +351,8 @@ export default function StoreHomePage() {
             <Link href="/" className="hover:text-amber-400 transition-colors">
               Privacy Policy
             </Link>
-            <a
-              href="#support"
-              className="hover:text-amber-400 transition-colors"
-            >
-              Contact Support
+            <a href="#support" className="hover:text-amber-400 transition-colors">
+              Contact Concierge
             </a>
           </div>
         </div>
