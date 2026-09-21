@@ -4,35 +4,35 @@
 
 @layer base {
   :root {
-    --background: 230 35% 4%;
+    --background: 245 45% 6%;
     --foreground: 210 40% 98%;
 
-    --card: 230 30% 6%;
+    --card: 245 40% 8%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 230 30% 6%;
+    --popover: 245 40% 8%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 38 92% 50%;
-    --primary-foreground: 230 35% 4%;
+    --primary: 270 95% 65%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 228 20% 12%;
+    --secondary: 245 30% 14%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 228 20% 12%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 245 30% 14%;
+    --muted-foreground: 240 15% 65%;
 
-    --accent: 199 89% 48%;
+    --accent: 330 85% 60%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 228 20% 16%;
-    --input: 228 20% 16%;
-    --ring: 38 92% 50%;
+    --border: 245 30% 18%;
+    --input: 245 30% 18%;
+    --ring: 270 95% 65%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
   }
 }
 
@@ -42,8 +42,8 @@
 
 body {
   margin: 0;
-  background-color: #07080c;
-  color: #f1f5f9;
+  background-color: #0b091f;
+  color: #f3f4f6;
   font-family:
     "Noto Sans Khmer Variable",
     system-ui,
@@ -53,58 +53,70 @@ body {
     Roboto,
     sans-serif;
   min-height: 100vh;
-  /* Carbon fiber subtle texture */
-  background-image: 
-    radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 100% 50%, rgba(56, 189, 248, 0.05) 0%, transparent 35%),
-    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+  /* Cosmic marketplace radial aura background */
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(168, 85, 247, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 85% 18%, rgba(236, 72, 153, 0.16) 0%, transparent 40%),
+    radial-gradient(circle at 50% 60%, rgba(99, 102, 241, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, #0b091f 0%, #080617 100%);
+  background-attachment: fixed;
 }
 
-/* Sapphire crystal glassmorphism */
-.glass-sapphire {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.glass-sapphire-card {
-  background: linear-gradient(145deg, rgba(16, 20, 32, 0.85) 0%, rgba(8, 10, 16, 0.95) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+/* Glassmorphism Cards inspired by reference design */
+.glass-marketplace-card {
+  background: linear-gradient(160deg, rgba(25, 22, 54, 0.75) 0%, rgba(13, 11, 32, 0.9) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.glass-sapphire-card:hover {
-  border-color: rgba(245, 158, 11, 0.45);
-  box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.2), 0 0 20px -5px rgba(56, 189, 248, 0.15);
+.glass-marketplace-card:hover {
+  border-color: rgba(168, 85, 247, 0.45);
+  box-shadow: 0 12px 35px -10px rgba(168, 85, 247, 0.25), 0 0 20px -5px rgba(236, 72, 153, 0.15);
 }
 
-/* Bugatti aerodynamic C-line ambient glow */
-.aero-glow-amber {
-  box-shadow: 0 0 40px -10px rgba(245, 158, 11, 0.25);
+/* Floating Reaction Badges keyframes */
+@keyframes float-badge-1 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
 }
 
-.aero-glow-cyan {
-  box-shadow: 0 0 40px -10px rgba(56, 189, 248, 0.25);
+@keyframes float-badge-2 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(8px) rotate(-1deg); }
 }
 
-/* Metallic tachometer text gradient */
-.text-tachometer {
-  background: linear-gradient(135deg, #fef08a 0%, #f59e0b 50%, #d97706 100%);
+@keyframes float-badge-3 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(-2deg); }
+}
+
+.animate-float-1 {
+  animation: float-badge-1 4.5s ease-in-out infinite;
+}
+
+.animate-float-2 {
+  animation: float-badge-2 5.2s ease-in-out infinite;
+}
+
+.animate-float-3 {
+  animation: float-badge-3 3.8s ease-in-out infinite;
+}
+
+/* Gradient Text */
+.text-marketplace-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 40%, #c084fc 80%, #f472b6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.text-titanium {
-  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #94a3b8 100%);
+.text-gold-gradient {
+  background: linear-gradient(135deg, #fef08a 0%, #f59e0b 60%, #d97706 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* Hide scrollbars cleanly */
+/* Clean Scrollbar */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

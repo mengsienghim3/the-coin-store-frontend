@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Gamepad2,
+  Gift,
   Sparkles,
   Search,
   ShieldCheck,
@@ -11,38 +12,44 @@ import {
   ChevronLeft,
   ChevronRight,
   Headphones,
-  CreditCard,
   ArrowUpRight,
   Flame,
-  Activity,
-  Gauge,
-  Layers,
+  ThumbsUp,
+  CreditCard,
+  CheckCircle2,
 } from 'lucide-react';
-import { fetchBanners, fetchGames, Banner, Game } from '../lib/api';
-import { TourbillonGauge } from '../components/tourbillon-gauge';
+import { fetchBanners, fetchGames, fetchGiftCards, Banner, Game, GiftCard } from '../lib/api';
 import { QuickTopupModal } from '../components/quick-topup-modal';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Card } from '../components/ui/card';
 
 export default function StoreHomePage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [games, setGames] = useState<Game[]>([]);
+  const [giftCards, setGiftCards] = useState<GiftCard[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Active Tab: 'games' | 'giftcards'
+  const [activeTab, setActiveTab] = useState<'games' | 'giftcards'>('games');
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedGameForTopup, setSelectedGameForTopup] = useState<Game | null>(null);
+
+  // Selected item for modal
+  const [selectedItem, setSelectedItem] = useState<(Game | GiftCard) | null>(null);
 
   useEffect(() => {
-    Promise.all([fetchBanners(), fetchGames()]).then(([bannerData, gameData]) => {
-      setBanners(bannerData);
-      setGames(gameData);
-      setLoading(false);
-    });
+    Promise.all([fetchBanners(), fetchGames(), fetchGiftCards()]).then(
+      ([bannerData, gameData, giftCardData]) => {
+        setBanners(bannerData);
+        setGames(gameData);
+        setGiftCards(giftCardData);
+        setLoading(false);
+      }
+    );
   }, []);
 
-  // Auto-rotate hero banners every 6 seconds
+  // Auto-rotate hero banners
   useEffect(() => {
     if (banners.length <= 1) return;
     const interval = setInterval(() => {
@@ -61,298 +68,468 @@ export default function StoreHomePage() {
     setActiveBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
   };
 
-  const filteredGames = games.filter((game) => {
-    const matchesCategory =
-      selectedCategory === 'all' ||
-      game.category.toLowerCase() === selectedCategory.toLowerCase();
+  // Reset subcategory when switching tabs
+  const handleTabChange = (tab: 'games' | 'giftcards') => {
+    setActiveTab(tab);
+    setSelectedSubCategory('all');
+  };
+
+  // Filter games
+  const filteredGames = games.filter((g) => {
+    const matchesCat =
+      selectedSubCategory === 'all' ||
+      g.category.toLowerCase() === selectedSubCategory.toLowerCase();
     const matchesSearch =
-      game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      game.publisher.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+      g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      g.publisher.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCat && matchesSearch;
   });
 
-  return (
-    <div className="min-h-screen flex flex-col bg-[#07080c] text-slate-100 selection:bg-amber-500 selection:text-slate-950">
-      {/* Top Tachometer Announcement Bar */}
-      <div className="bg-gradient-to-r from-amber-600/15 via-yellow-500/20 to-cyan-500/15 border-b border-white/10 py-2 px-4 text-center text-xs font-semibold text-amber-300 flex items-center justify-center gap-2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer-aero" />
-        <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400 animate-pulse" />
-        <span className="font-mono tracking-wide">
-          BUGATTI TOURBILLON ENGINE SPEED: 9,000 RPM AUTOMATED GAME DIAMOND DISPATCH
-        </span>
-      </div>
+  // Filter gift cards
+  const filteredGiftCards = giftCards.filter((gc) => {
+    const matchesCat =
+      selectedSubCategory === 'all' ||
+      gc.category.toLowerCase() === selectedSubCategory.toLowerCase();
+    const matchesSearch =
+      gc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      gc.brand.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
 
-      {/* Main Titanium Navigation */}
-      <header className="sticky top-0 z-40 bg-[#0a0d14]/90 backdrop-blur-xl border-b border-white/10 shadow-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-3.5 group">
-            {/* Logo Hub with Tourbillon Ring */}
-            <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 p-[1.5px] shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform duration-300">
-              <div className="w-full h-full rounded-[14px] bg-[#0c0e17] flex items-center justify-center">
-                <Gamepad2 className="w-6 h-6 text-amber-400 stroke-[2.2]" />
+  const currentBanner = banners[activeBannerIndex] || banners[0];
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#0b091f] text-slate-100 selection:bg-purple-500 selection:text-white">
+      {/* ========================================================================= */}
+      {/* 1. NAVBAR (Inspired by Reference Design: Clean pill search & links)       */}
+      {/* ========================================================================= */}
+      <header className="sticky top-0 z-40 bg-[#0d0a27]/85 backdrop-blur-2xl border-b border-white/[0.08] shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-500 to-amber-400 p-[1.5px] shadow-lg shadow-purple-500/25 group-hover:scale-105 transition-transform duration-300">
+              <div className="w-full h-full rounded-[14px] bg-[#0e0c26] flex items-center justify-center">
+                <Gamepad2 className="w-5 h-5 text-pink-400 stroke-[2.2]" />
               </div>
-              <div className="absolute -inset-0.5 rounded-2xl border border-amber-400/40 animate-pulse pointer-events-none" />
             </div>
             <div>
-              <span className="text-lg font-black tracking-tight text-white block leading-none font-mono">
+              <span className="text-lg font-black tracking-tight text-white block leading-none">
                 THE COIN STORE
               </span>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                <span className="text-[10px] uppercase tracking-widest text-tachometer font-extrabold">
-                  Tourbillon Reseller Edition
-                </span>
-              </div>
+              <span className="text-[10px] uppercase tracking-widest text-purple-400 font-bold">
+                Digital Reseller
+              </span>
             </div>
           </Link>
 
-          {/* Quick Search */}
+          {/* Centered Pill Search Input */}
           <div className="hidden md:flex flex-1 max-w-md mx-6 relative">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search Mobile Legends, Free Fire, PUBG..."
+              placeholder="Search game diamonds, vouchers, gift cards..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/[0.04] border border-white/10 rounded-full pl-10 pr-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400/60 focus:ring-1 focus:ring-amber-400/60 transition-all font-sans"
+              className="w-full bg-white/[0.06] hover:bg-white/[0.09] border border-white/10 rounded-full pl-11 pr-5 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-purple-400/80 focus:ring-2 focus:ring-purple-400/20 transition-all font-sans"
             />
           </div>
 
-          {/* Header Action: 24/7 VIP Concierge */}
-          <div className="flex items-center gap-3">
-            <Button
-              variant="hypercar"
-              size="sm"
-              className="gap-2 rounded-full"
-              onClick={() => alert('VIP Concierge Support: 24/7 Telegram & Live Agent Ready')}
+          {/* Navigation Links */}
+          <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-300">
+            <button
+              onClick={() => handleTabChange('games')}
+              className={`transition-colors ${activeTab === 'games' ? 'text-purple-400 font-bold' : 'hover:text-white'}`}
             >
-              <Headphones className="w-3.5 h-3.5 text-cyan-400" />
-              VIP Support
-            </Button>
+              Games
+            </button>
+            <button
+              onClick={() => handleTabChange('giftcards')}
+              className={`transition-colors ${activeTab === 'giftcards' ? 'text-purple-400 font-bold' : 'hover:text-white'}`}
+            >
+              Gift Cards
+            </button>
+            <a href="#promos" className="hover:text-white transition-colors">
+              Hot Deals
+            </a>
+            <a href="#support" className="hover:text-white transition-colors">
+              FAQ
+            </a>
+          </nav>
+
+          {/* Right Action: Support Badge */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => alert('Customer VIP Support: 24/7 Live Concierge & Telegram Ready')}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 hover:text-purple-300 transition-all"
+            >
+              <Headphones className="w-3.5 h-3.5 text-purple-400" />
+              <span>24/7 Support</span>
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-10">
-        {/* Dynamic Promotional Banner Carousel */}
-        {banners.length > 0 && (
-          <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl group bg-slate-950 aspect-[21/9] sm:aspect-[24/9] max-h-[380px]">
-            {banners.map((banner, index) => (
-              <div
-                key={banner.id}
-                className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                  index === activeBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-                }`}
-              >
-                <img
-                  src={banner.imageUrl}
-                  alt={banner.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#07080c] via-[#07080c]/40 to-transparent" />
-                <div className="absolute bottom-6 left-6 sm:bottom-10 sm:left-10 z-20 max-w-xl">
-                  <Badge variant="tourbillon" className="gap-1.5 mb-2.5">
-                    <Sparkles className="w-3 h-3 text-amber-400" />
-                    Special Promotion
-                  </Badge>
-                  <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight drop-shadow-md">
-                    {banner.title}
-                  </h2>
+      {/* ========================================================================= */}
+      {/* 2. HERO & BANNER SECTION (Inspired by Reference Design Hero)              */}
+      {/* ========================================================================= */}
+      <section className="relative overflow-hidden pt-8 sm:pt-14 pb-12 sm:pb-20">
+        {/* Atmospheric ambient glows */}
+        <div className="absolute top-1/4 left-10 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/3 right-10 w-96 h-96 bg-pink-500/15 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            {/* Left Column: Headline & Dual Action Pills */}
+            <div className="lg:col-span-6 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-xs font-semibold">
+                <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+                <span>Premier Digital Gaming & Voucher Exchange</span>
+              </div>
+
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1]">
+                Buy, Top-Up And <br />
+                <span className="text-marketplace-gradient">Collect Game Diamonds.</span>
+              </h1>
+
+              <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-lg">
+                The world’s most trusted automated marketplace for instant Mobile Legends diamonds, Free Fire, PUBG UC, and digital gaming gift cards.
+              </p>
+
+              {/* Dual Pill CTA Buttons (Just like Upload & Explore in reference image) */}
+              <div className="flex flex-wrap items-center gap-4 pt-2">
+                <button
+                  onClick={() => {
+                    handleTabChange('games');
+                    document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="px-7 py-3.5 rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-amber-400 text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-purple-600/30 hover:opacity-95 hover:scale-105 transition-all"
+                >
+                  Top Up Games
+                </button>
+                <button
+                  onClick={() => {
+                    handleTabChange('giftcards');
+                    document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="px-7 py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] border border-white/20 text-white font-bold text-xs sm:text-sm uppercase tracking-wider hover:scale-105 transition-all backdrop-blur-md"
+                >
+                  Explore Gift Cards
+                </button>
+              </div>
+
+              {/* Mini Stats Bar */}
+              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/10 max-w-md">
+                <div>
+                  <div className="text-xl sm:text-2xl font-black text-white">0.2s</div>
+                  <div className="text-[11px] text-slate-400 uppercase tracking-wide">Instant Reload</div>
+                </div>
+                <div>
+                  <div className="text-xl sm:text-2xl font-black text-purple-400">100%</div>
+                  <div className="text-[11px] text-slate-400 uppercase tracking-wide">Automated API</div>
+                </div>
+                <div>
+                  <div className="text-xl sm:text-2xl font-black text-pink-400">24/7</div>
+                  <div className="text-[11px] text-slate-400 uppercase tracking-wide">VIP Delivery</div>
                 </div>
               </div>
-            ))}
+            </div>
 
-            {/* Navigation Arrows */}
-            {banners.length > 1 && (
-              <>
-                <button
-                  onClick={prevBanner}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                  aria-label="Previous banner"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={nextBanner}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                  aria-label="Next banner"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </>
-            )}
+            {/* Right Column: Floating Visual Showcase Card with Interactive Reaction Badges */}
+            <div className="lg:col-span-6 relative flex items-center justify-center">
+              {/* Central Floating Card (like reference image sheep avatar card) */}
+              <div className="relative w-full max-w-md aspect-[4/3] sm:aspect-[16/11] rounded-[36px] p-2 bg-gradient-to-tr from-purple-500/30 via-pink-500/20 to-indigo-500/30 border border-white/20 shadow-2xl shadow-purple-950/80 backdrop-blur-2xl overflow-hidden group">
+                {banners.length > 0 ? (
+                  <div className="relative w-full h-full rounded-[30px] overflow-hidden">
+                    <img
+                      src={currentBanner?.imageUrl}
+                      alt={currentBanner?.title || 'Featured Promotion'}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0e0c24] via-[#0e0c24]/40 to-transparent" />
+                    <div className="absolute bottom-6 left-6 right-6 z-10">
+                      <span className="inline-block px-2.5 py-0.5 rounded-full bg-pink-500/30 border border-pink-400/40 text-[10px] font-bold text-pink-300 uppercase tracking-wider mb-1.5 backdrop-blur-md">
+                        Featured Promo
+                      </span>
+                      <h3 className="text-lg sm:text-xl font-black text-white leading-tight drop-shadow-md">
+                        {currentBanner?.title}
+                      </h3>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full h-full rounded-[30px] bg-[#141133] flex items-center justify-center text-purple-300">
+                    <Gamepad2 className="w-16 h-16" />
+                  </div>
+                )}
 
-            {/* Tachometer Indicator Dots */}
-            {banners.length > 1 && (
-              <div className="absolute bottom-4 right-6 z-20 flex items-center gap-2">
-                {banners.map((_, i) => (
+                {/* Banner Carousel Controls */}
+                {banners.length > 1 && (
+                  <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-2.5 py-1 border border-white/15">
+                    <button
+                      onClick={prevBanner}
+                      className="text-slate-300 hover:text-white p-0.5"
+                      aria-label="Previous banner"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="text-[10px] font-mono text-slate-300">
+                      {activeBannerIndex + 1}/{banners.length}
+                    </span>
+                    <button
+                      onClick={nextBanner}
+                      className="text-slate-300 hover:text-white p-0.5"
+                      aria-label="Next banner"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Floating Reaction Badges (Directly inspired by reference image!) */}
+              {/* Badge 1: Top Left */}
+              <div className="absolute -top-4 -left-2 sm:-left-6 z-20 px-3.5 py-2 rounded-2xl bg-[#1d1844]/90 border border-purple-400/40 shadow-xl backdrop-blur-xl flex items-center gap-2 animate-float-1 pointer-events-none">
+                <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <ThumbsUp className="w-3.5 h-3.5 fill-current" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-extrabold text-white">Instant Top-Up</div>
+                  <div className="text-[9px] text-purple-300">100% Automated</div>
+                </div>
+              </div>
+
+              {/* Badge 2: Top Right */}
+              <div className="absolute -top-6 -right-2 sm:-right-4 z-20 px-3.5 py-2 rounded-2xl bg-[#1d1844]/90 border border-pink-400/40 shadow-xl backdrop-blur-xl flex items-center gap-2 animate-float-2 pointer-events-none">
+                <div className="w-7 h-7 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-extrabold text-white">Best Discount</div>
+                  <div className="text-[9px] text-pink-300">Direct Reseller</div>
+                </div>
+              </div>
+
+              {/* Badge 3: Bottom Left */}
+              <div className="absolute -bottom-5 -left-4 z-20 px-3.5 py-2 rounded-2xl bg-[#1d1844]/90 border border-cyan-400/40 shadow-xl backdrop-blur-xl flex items-center gap-2 animate-float-3 pointer-events-none">
+                <div className="w-7 h-7 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                  <Zap className="w-3.5 h-3.5 fill-current" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-extrabold text-white">0.2s Dispatch</div>
+                  <div className="text-[9px] text-cyan-300">Zero Wait Time</div>
+                </div>
+              </div>
+
+              {/* Badge 4: Bottom Right */}
+              <div className="absolute -bottom-4 -right-2 sm:-right-6 z-20 px-3.5 py-2 rounded-2xl bg-[#1d1844]/90 border border-emerald-400/40 shadow-xl backdrop-blur-xl flex items-center gap-2 animate-float-1 pointer-events-none">
+                <div className="w-7 h-7 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-extrabold text-white">Genuine Keys</div>
+                  <div className="text-[9px] text-emerald-300">Official Partners</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 3. SECTION TABS: "GAME TOP-UP" vs "DIGITAL GIFT CARDS"                    */}
+      {/* ========================================================================= */}
+      <section id="catalog" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/[0.08]">
+          {/* Main Dual Toggle Tabs */}
+          <div className="inline-flex p-1.5 rounded-2xl bg-[#161239] border border-white/10 shadow-inner">
+            <button
+              onClick={() => handleTabChange('games')}
+              className={`flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs sm:text-sm font-black transition-all ${
+                activeTab === 'games'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-600/30 scale-100'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Gamepad2 className="w-4 h-4" />
+              <span>Game Diamonds Top-Up</span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange('giftcards')}
+              className={`flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs sm:text-sm font-black transition-all ${
+                activeTab === 'giftcards'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-600/30 scale-100'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Gift className="w-4 h-4" />
+              <span>Digital Gift Cards</span>
+            </button>
+          </div>
+
+          {/* Subcategory Filter Chips */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
+            {activeTab === 'games'
+              ? ['all', 'MOBA', 'Battle Royale', 'RPG', 'Shooter'].map((cat) => (
                   <button
-                    key={i}
-                    onClick={() => setActiveBannerIndex(i)}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      i === activeBannerIndex ? 'w-8 bg-amber-400 shadow-md shadow-amber-400/50' : 'w-2 bg-white/30'
+                    key={cat}
+                    onClick={() => setSelectedSubCategory(cat)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
+                      selectedSubCategory === cat
+                        ? 'bg-white text-slate-950 font-bold'
+                        : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
                     }`}
-                    aria-label={`Slide ${i + 1}`}
-                  />
+                  >
+                    {cat === 'all' ? 'All Games' : cat}
+                  </button>
+                ))
+              : ['all', 'PC & Steam', 'Mobile & Apps', 'Console'].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedSubCategory(cat)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
+                      selectedSubCategory === cat
+                        ? 'bg-white text-slate-950 font-bold'
+                        : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {cat === 'all' ? 'All Gift Cards' : cat}
+                  </button>
                 ))}
-              </div>
-            )}
           </div>
-        )}
+        </div>
 
-        {/* Bugatti Tourbillon Horology Gauge Widget */}
-        <TourbillonGauge />
-
-        {/* Game Catalog Section */}
-        <section id="games" className="pt-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Flame className="w-5 h-5 text-amber-500 fill-amber-500 animate-pulse" />
-                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-mono">
-                  POPULAR TOP-UP
-                </h2>
-              </div>
-              <p className="text-xs text-slate-400">
-                Instant delivery directly to your game ID via automated provider APIs
-              </p>
-            </div>
-
-            {/* Category Filter Chips with Animated Indicators */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
-              {['all', 'MOBA', 'Battle Royale', 'RPG'].map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                    selectedCategory === cat
-                      ? 'bg-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/25 scale-105'
-                      : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5'
-                  }`}
-                >
-                  {cat === 'all' ? 'All Games' : cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Game Cards Grid (Hypercar Instrument Cards) */}
+        {/* ======================================================================= */}
+        {/* 4. LISTINGS GRID (Games or Gift Cards)                                  */}
+        {/* ======================================================================= */}
+        <div className="pt-8">
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {[1, 2, 3, 4, 5].map((i) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="aspect-[3/4] rounded-3xl bg-white/5 animate-pulse" />
               ))}
             </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+          ) : activeTab === 'games' ? (
+            /* GAMES LISTING */
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
               {filteredGames.map((game) => (
-                <Card
+                <div
                   key={game.id}
-                  className="group relative bg-[#0d101a] hover:bg-[#131828] border-white/10 hover:border-amber-400/60 p-3.5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-2xl cursor-pointer overflow-hidden"
-                  onClick={() => setSelectedGameForTopup(game)}
+                  onClick={() => setSelectedItem(game)}
+                  className="group relative rounded-3xl bg-[#141033] hover:bg-[#1a1642] border border-white/10 hover:border-purple-400/60 p-3.5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-2 shadow-xl hover:shadow-purple-900/30 cursor-pointer overflow-hidden"
                 >
-                  {/* Subtle aero glow corner indicator */}
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/0 group-hover:bg-amber-500/15 rounded-bl-full transition-all duration-500 pointer-events-none" />
+                  {/* Glowing hover aura */}
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/0 group-hover:bg-purple-500/20 rounded-bl-full transition-all duration-500 pointer-events-none" />
 
                   <div>
-                    {/* Game Artwork Thumbnail */}
+                    {/* Artwork Container */}
                     <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-950 mb-3 border border-white/10 shadow-inner">
                       <img
                         src={game.imageUrl}
                         alt={game.name}
-                        className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
-                      <Badge
-                        variant="tourbillon"
-                        className="absolute top-2 left-2 text-[9px] px-2 py-0.5"
-                      >
-                        ⚡ 0.2s Dispatch
-                      </Badge>
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-purple-600/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-wider shadow">
+                        ⚡ Instant
+                      </span>
                     </div>
 
-                    <span className="text-[10px] font-mono text-cyan-400/90 uppercase tracking-widest block mb-0.5">
+                    <span className="text-[10px] font-mono text-purple-300/80 uppercase tracking-widest block mb-0.5">
                       {game.publisher}
                     </span>
-                    <h3 className="font-extrabold text-white text-sm line-clamp-1 group-hover:text-amber-300 transition-colors">
+                    <h3 className="font-extrabold text-white text-sm line-clamp-1 group-hover:text-pink-300 transition-colors">
                       {game.name}
                     </h3>
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-                    <span className="text-slate-400 text-[11px] font-mono">{game.category}</span>
-                    <span className="text-amber-400 font-bold text-xs flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block leading-none">From</span>
+                      <span className="text-xs font-black text-amber-400">{game.startingPrice || '$0.99'}</span>
+                    </div>
+                    <span className="text-purple-300 font-bold text-xs flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
                       Reload <ArrowUpRight className="w-3.5 h-3.5" />
                     </span>
                   </div>
-                </Card>
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* GIFT CARDS LISTING */
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
+              {filteredGiftCards.map((card) => (
+                <div
+                  key={card.id}
+                  onClick={() => setSelectedItem(card)}
+                  className="group relative rounded-3xl bg-[#141033] hover:bg-[#1a1642] border border-white/10 hover:border-pink-400/60 p-3.5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-2 shadow-xl hover:shadow-pink-900/30 cursor-pointer overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-pink-500/0 group-hover:bg-pink-500/20 rounded-bl-full transition-all duration-500 pointer-events-none" />
+
+                  <div>
+                    {/* Gift Card Artwork */}
+                    <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-950 mb-3 border border-white/10 shadow-inner">
+                      <img
+                        src={card.imageUrl}
+                        alt={card.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-pink-600/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-wider shadow">
+                        🎁 Digital Code
+                      </span>
+                    </div>
+
+                    <span className="text-[10px] font-mono text-pink-300/80 uppercase tracking-widest block mb-0.5">
+                      {card.brand}
+                    </span>
+                    <h3 className="font-extrabold text-white text-sm line-clamp-1 group-hover:text-pink-300 transition-colors">
+                      {card.name}
+                    </h3>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block leading-none">From</span>
+                      <span className="text-xs font-black text-amber-400">{card.startingPrice}</span>
+                    </div>
+                    <span className="text-pink-300 font-bold text-xs flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                      Buy <ArrowUpRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </div>
               ))}
             </div>
           )}
-        </section>
+        </div>
+      </section>
 
-        {/* Hypercar Performance & Security Pillars */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-          <Card className="p-6 bg-gradient-to-br from-[#0c0f18] to-[#07090e] border-white/10">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6" />
-            </div>
-            <h4 className="font-bold text-white text-base mb-1">9,000 RPM Injection</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Automated provider API gateway dispatches diamonds into your game account in seconds.
-            </p>
-          </Card>
-
-          <Card className="p-6 bg-gradient-to-br from-[#0c0f18] to-[#07090e] border-white/10">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <h4 className="font-bold text-white text-base mb-1">Zero-Password Top-Up</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Only your Player ID & Zone ID are needed. Your account credentials stay 100% private.
-            </p>
-          </Card>
-
-          <Card className="p-6 bg-gradient-to-br from-[#0c0f18] to-[#07090e] border-white/10">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mb-4">
-              <CreditCard className="w-6 h-6" />
-            </div>
-            <h4 className="font-bold text-white text-base mb-1">Cambodian Local Rail</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Direct checkout support for Bakong KHQR, ABA Pay, and international cards.
-            </p>
-          </Card>
-        </section>
-      </main>
-
-      {/* Quick Top-Up Modal (Interactive Cockpit) */}
+      {/* Quick Top-Up / Purchase Modal */}
       <QuickTopupModal
-        game={selectedGameForTopup}
-        onClose={() => setSelectedGameForTopup(null)}
+        item={selectedItem}
+        itemType={activeTab === 'games' ? 'game' : 'giftcard'}
+        onClose={() => setSelectedItem(null)}
       />
 
-      {/* Titanium Minimalist Footer */}
-      <footer className="mt-20 border-t border-white/10 bg-[#06080d] py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-500">
+      {/* Modern Marketplace Footer */}
+      <footer id="support" className="mt-24 border-t border-white/10 bg-[#080617] py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-400">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400 font-mono font-black text-xs">
-              BUG
+            <div className="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+              <Gamepad2 className="w-4 h-4" />
             </div>
             <div>
-              <p className="font-bold text-slate-300">The Coin Store — Tourbillon Reseller Edition</p>
-              <p className="text-[11px]">All game trademarks belong to their respective publishers.</p>
+              <p className="font-bold text-white">The Coin Store — Digital Marketplace</p>
+              <p className="text-[11px] text-slate-500">Fast, automated delivery for game currencies and digital gift vouchers.</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-6 text-slate-400">
-            <Link href="/" className="hover:text-amber-400 transition-colors">
+          <div className="flex items-center gap-6">
+            <Link href="/" className="hover:text-purple-400 transition-colors">
               Terms of Service
             </Link>
-            <Link href="/" className="hover:text-amber-400 transition-colors">
+            <Link href="/" className="hover:text-purple-400 transition-colors">
               Privacy Policy
             </Link>
-            <a href="#support" className="hover:text-amber-400 transition-colors">
-              Contact Concierge
+            <a href="#support" className="hover:text-purple-400 transition-colors">
+              VIP Concierge
             </a>
           </div>
         </div>

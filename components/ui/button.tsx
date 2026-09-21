@@ -9,11 +9,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow-lg shadow-amber-500/20 hover:bg-amber-400 hover:shadow-amber-500/30',
+          'bg-purple-600 text-white shadow-lg shadow-purple-500/25 hover:bg-purple-500',
         tourbillon:
-          'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/25 hover:opacity-95 hover:shadow-amber-500/40 border border-amber-300/40',
+          'bg-gradient-to-r from-purple-600 via-pink-500 to-amber-400 text-white font-black shadow-lg shadow-purple-500/25 hover:opacity-95',
         hypercar:
-          'bg-slate-900/80 hover:bg-slate-800 text-white border border-cyan-400/40 hover:border-cyan-400 shadow-md shadow-cyan-500/10 hover:shadow-cyan-500/25 hover:text-cyan-300',
+          'bg-slate-900/80 hover:bg-slate-800 text-white border border-purple-400/40 hover:border-purple-400 shadow-md shadow-purple-500/10 hover:text-purple-300',
         secondary:
           'bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-white/10',
         outline:

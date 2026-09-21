@@ -3,16 +3,16 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
 const badgeVariants = cva(
-  'inline-flex items-center rounded-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  'inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
   {
     variants: {
       variant: {
         default:
-          'border-transparent bg-amber-500 text-slate-950 shadow',
+          'border-transparent bg-purple-600 text-white shadow',
         tourbillon:
-          'border border-amber-400/40 bg-amber-500/15 text-amber-300 backdrop-blur-md shadow-sm shadow-amber-500/10',
+          'border border-purple-400/40 bg-purple-500/15 text-purple-300 backdrop-blur-md shadow-sm shadow-purple-500/10',
         hypercar:
-          'border border-cyan-400/40 bg-cyan-500/15 text-cyan-300 backdrop-blur-md shadow-sm shadow-cyan-500/10',
+          'border border-pink-400/40 bg-pink-500/15 text-pink-300 backdrop-blur-md shadow-sm shadow-pink-500/10',
         ruby:
           'border border-rose-500/40 bg-rose-500/15 text-rose-300 backdrop-blur-md',
         titanium:
