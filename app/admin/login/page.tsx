@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Shield, Lock, Mail, ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { Shield, Lock, Mail, ArrowLeft, Loader2, Sparkles, CheckCircle } from "lucide-react";
 import { adminLogin, setStoredAdmin, getStoredAdmin } from "../../../lib/api";
 
 export default function AdminLoginPage() {
@@ -12,11 +12,12 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     // If already logged in, redirect to admin panel
     if (getStoredAdmin()) {
-      router.push("/admin");
+      router.replace("/admin");
     }
   }, [router]);
 
@@ -28,12 +29,14 @@ export default function AdminLoginPage() {
     try {
       const auth = await adminLogin(email, password);
       setStoredAdmin(auth);
-      router.push("/admin");
+      setSuccess(true);
+      setTimeout(() => {
+        router.replace("/admin");
+      }, 400);
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "Invalid email or password",
       );
-    } finally {
       setLoading(false);
     }
   };
@@ -74,6 +77,13 @@ export default function AdminLoginPage() {
             Authorized personnel and store managers only
           </p>
         </div>
+
+        {success && (
+          <div className="mb-6 p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs text-center font-medium flex items-center justify-center gap-2 animate-in fade-in">
+            <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <span>Authenticated successfully! Redirecting to dashboard...</span>
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center font-medium">

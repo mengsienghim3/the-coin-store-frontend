@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8788";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8787";
 
 export interface Banner {
   id: string;
@@ -315,6 +315,41 @@ const FALLBACK_GIFT_CARDS: GiftCard[] = [
   },
 ];
 
+// --- Session & Auth Helpers ---
+const AUTH_KEY = "the_coin_store_admin_auth";
+
+export function getStoredAdmin(): AuthResponse | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem(AUTH_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredAdmin(auth: AuthResponse): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
+}
+
+export function clearStoredAdmin(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(AUTH_KEY);
+}
+
+function getAuthHeaders(): Record<string, string> {
+  const session = getStoredAdmin();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (session?.token) {
+    headers["Authorization"] = `Bearer ${session.token}`;
+  }
+  return headers;
+}
+
 // --- Banners API ---
 export async function fetchBanners(all: boolean = false): Promise<Banner[]> {
   try {
@@ -322,6 +357,7 @@ export async function fetchBanners(all: boolean = false): Promise<Banner[]> {
       `${API_BASE_URL}/api/banners${all ? "?all=true" : ""}`,
       {
         cache: "no-store",
+        headers: getAuthHeaders(),
       },
     );
     if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
@@ -342,7 +378,7 @@ export async function createBanner(data: {
 }): Promise<Banner> {
   const res = await fetch(`${API_BASE_URL}/api/banners`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
   const json = await res.json();
@@ -359,7 +395,7 @@ export async function updateBanner(
 ): Promise<Banner> {
   const res = await fetch(`${API_BASE_URL}/api/banners/${id}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
   const json = await res.json();
@@ -371,6 +407,7 @@ export async function updateBanner(
 export async function deleteBanner(id: string): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/api/banners/${id}`, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
   const json = await res.json();
   if (!res.ok)
@@ -414,26 +451,21 @@ export async function adminLogin(
   return json.data;
 }
 
-// Session Helpers
-const AUTH_KEY = "the_coin_store_admin_auth";
-
-export function getStoredAdmin(): AuthResponse | null {
-  if (typeof window === "undefined") return null;
-  const raw = localStorage.getItem(AUTH_KEY);
-  if (!raw) return null;
+export async function verifyAdminSession(
+  token: string,
+): Promise<AdminUser | null> {
   try {
-    return JSON.parse(raw);
+    const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data || null;
   } catch {
     return null;
   }
 }
 
-export function setStoredAdmin(auth: AuthResponse): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
-}
-
-export function clearStoredAdmin(): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(AUTH_KEY);
-}
