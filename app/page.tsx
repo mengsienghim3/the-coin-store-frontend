@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Gamepad2,
   Sparkles,
@@ -15,23 +15,25 @@ import {
   Shield,
   ArrowUpRight,
   Flame,
-} from 'lucide-react';
-import { fetchBanners, fetchGames, Banner, Game } from '../lib/api';
+} from "lucide-react";
+import { fetchBanners, fetchGames, Banner, Game } from "../lib/api";
 
 export default function StoreHomePage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    Promise.all([fetchBanners(), fetchGames()]).then(([bannerData, gameData]) => {
-      setBanners(bannerData);
-      setGames(gameData);
-      setLoading(false);
-    });
+    Promise.all([fetchBanners(), fetchGames()]).then(
+      ([bannerData, gameData]) => {
+        setBanners(bannerData);
+        setGames(gameData);
+        setLoading(false);
+      },
+    );
   }, []);
 
   // Auto-rotate hero banners every 5 seconds
@@ -50,12 +52,14 @@ export default function StoreHomePage() {
 
   const prevBanner = () => {
     if (banners.length === 0) return;
-    setActiveBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
+    setActiveBannerIndex(
+      (prev) => (prev - 1 + banners.length) % banners.length,
+    );
   };
 
   const filteredGames = games.filter((game) => {
     const matchesCategory =
-      selectedCategory === 'all' ||
+      selectedCategory === "all" ||
       game.category.toLowerCase() === selectedCategory.toLowerCase();
     const matchesSearch =
       game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -68,7 +72,10 @@ export default function StoreHomePage() {
       {/* Top Announcement Bar */}
       <div className="bg-gradient-to-r from-amber-600/20 via-yellow-500/20 to-amber-600/20 border-b border-amber-500/20 py-2 px-4 text-center text-xs font-semibold text-amber-300 flex items-center justify-center gap-2">
         <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400 animate-pulse" />
-        <span>Instant Automated Game Diamond Delivery — Direct Reseller Provider Connection</span>
+        <span>
+          Instant Automated Game Diamond Delivery — Direct Reseller Provider
+          Connection
+        </span>
       </div>
 
       {/* Main Header / Navigation */}
@@ -102,13 +109,13 @@ export default function StoreHomePage() {
 
           {/* Header Actions */}
           <div className="flex items-center gap-3">
-            <Link
-              href="/admin"
+            <a
+              href="#support"
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 hover:text-amber-400 transition-colors"
             >
-              <Shield className="w-3.5 h-3.5 text-amber-400" />
-              Admin Panel
-            </Link>
+              <Headphones className="w-3.5 h-3.5 text-amber-400" />
+              24/7 Support
+            </a>
           </div>
         </div>
       </header>
@@ -123,7 +130,9 @@ export default function StoreHomePage() {
               <div
                 key={banner.id}
                 className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                  index === activeBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                  index === activeBannerIndex
+                    ? "opacity-100 z-10"
+                    : "opacity-0 z-0 pointer-events-none"
                 }`}
               >
                 <img
@@ -171,7 +180,9 @@ export default function StoreHomePage() {
                     key={i}
                     onClick={() => setActiveBannerIndex(i)}
                     className={`h-1.5 rounded-full transition-all ${
-                      i === activeBannerIndex ? 'w-6 bg-amber-400' : 'w-2 bg-white/30'
+                      i === activeBannerIndex
+                        ? "w-6 bg-amber-400"
+                        : "w-2 bg-white/30"
                     }`}
                     aria-label={`Slide ${i + 1}`}
                   />
@@ -189,7 +200,9 @@ export default function StoreHomePage() {
             </div>
             <div>
               <div className="text-xs font-bold text-white">Instant Reload</div>
-              <div className="text-[11px] text-slate-400">Automated provider delivery</div>
+              <div className="text-[11px] text-slate-400">
+                Automated provider delivery
+              </div>
             </div>
           </div>
 
@@ -199,7 +212,9 @@ export default function StoreHomePage() {
             </div>
             <div>
               <div className="text-xs font-bold text-white">100% Secure</div>
-              <div className="text-[11px] text-slate-400">No game password required</div>
+              <div className="text-[11px] text-slate-400">
+                No game password required
+              </div>
             </div>
           </div>
 
@@ -209,7 +224,9 @@ export default function StoreHomePage() {
             </div>
             <div>
               <div className="text-xs font-bold text-white">Local Payment</div>
-              <div className="text-[11px] text-slate-400">KHQR, ABA & Bakong</div>
+              <div className="text-[11px] text-slate-400">
+                KHQR, ABA & Bakong
+              </div>
             </div>
           </div>
 
@@ -219,7 +236,9 @@ export default function StoreHomePage() {
             </div>
             <div>
               <div className="text-xs font-bold text-white">24/7 Support</div>
-              <div className="text-[11px] text-slate-400">Always online assistance</div>
+              <div className="text-[11px] text-slate-400">
+                Always online assistance
+              </div>
             </div>
           </div>
         </div>
@@ -233,23 +252,24 @@ export default function StoreHomePage() {
                 Popular Game Top-Up
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                Select your game to top-up diamonds, vouchers, or battle passes instantly
+                Select your game to top-up diamonds, vouchers, or battle passes
+                instantly
               </p>
             </div>
 
             {/* Category Filter Chips */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
-              {['all', 'MOBA', 'Battle Royale', 'RPG'].map((cat) => (
+              {["all", "MOBA", "Battle Royale", "RPG"].map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
                     selectedCategory === cat
-                      ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
-                      : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5'
+                      ? "bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20"
+                      : "bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5"
                   }`}
                 >
-                  {cat === 'all' ? 'All Games' : cat}
+                  {cat === "all" ? "All Games" : cat}
                 </button>
               ))}
             </div>
@@ -259,7 +279,10 @@ export default function StoreHomePage() {
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="aspect-[3/4] rounded-2xl bg-white/5 animate-pulse" />
+                <div
+                  key={i}
+                  className="aspect-[3/4] rounded-2xl bg-white/5 animate-pulse"
+                />
               ))}
             </div>
           ) : (
@@ -269,7 +292,9 @@ export default function StoreHomePage() {
                   key={game.id}
                   className="group relative rounded-2xl bg-[#0e111a] hover:bg-[#151926] border border-white/10 hover:border-amber-500/50 p-3 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 shadow-xl overflow-hidden cursor-pointer"
                   onClick={() =>
-                    alert(`Top up for ${game.name} will connect to the reseller provider order form!`)
+                    alert(
+                      `Top up for ${game.name} will connect to the reseller provider order form!`,
+                    )
                   }
                 >
                   {/* Game Artwork */}
@@ -294,7 +319,9 @@ export default function StoreHomePage() {
                   </div>
 
                   <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-xs">
-                    <span className="text-slate-400 text-[11px]">{game.category}</span>
+                    <span className="text-slate-400 text-[11px]">
+                      {game.category}
+                    </span>
                     <span className="text-amber-400 font-bold flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
                       Top-Up <ArrowUpRight className="w-3.5 h-3.5" />
                     </span>
@@ -314,8 +341,13 @@ export default function StoreHomePage() {
               <Gamepad2 className="w-4 h-4" />
             </div>
             <div>
-              <p className="font-bold text-slate-300">The Coin Store — Reseller Platform</p>
-              <p className="text-[11px]">All game titles and trademarks are property of their respective owners.</p>
+              <p className="font-bold text-slate-300">
+                The Coin Store — Reseller Platform
+              </p>
+              <p className="text-[11px]">
+                All game titles and trademarks are property of their respective
+                owners.
+              </p>
             </div>
           </div>
 
@@ -326,9 +358,12 @@ export default function StoreHomePage() {
             <Link href="/" className="hover:text-amber-400 transition-colors">
               Privacy Policy
             </Link>
-            <Link href="/admin" className="hover:text-amber-400 transition-colors font-semibold">
-              Admin Portal
-            </Link>
+            <a
+              href="#support"
+              className="hover:text-amber-400 transition-colors"
+            >
+              Contact Support
+            </a>
           </div>
         </div>
       </footer>

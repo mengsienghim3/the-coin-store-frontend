@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Shield, Lock, Mail, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
-import { adminLogin, setStoredAdmin, getStoredAdmin } from '../../../lib/api';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Shield, Lock, Mail, ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { adminLogin, setStoredAdmin, getStoredAdmin } from "../../../lib/api";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // If already logged in, redirect to admin panel
     if (getStoredAdmin()) {
-      router.push('/admin');
+      router.push("/admin");
     }
   }, [router]);
 
@@ -28,17 +28,19 @@ export default function AdminLoginPage() {
     try {
       const auth = await adminLogin(email, password);
       setStoredAdmin(auth);
-      router.push('/admin');
+      router.push("/admin");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Invalid email or password');
+      setError(
+        err instanceof Error ? err.message : "Invalid email or password",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleFillDemo = () => {
-    setEmail('admin@thecoinstore.com');
-    setPassword('Admin123456!');
+    setEmail("admin@thecoinstore.com");
+    setPassword("Admin123456!");
     setError(null);
   };
 
@@ -65,8 +67,12 @@ export default function AdminLoginPage() {
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-lg shadow-amber-500/20 mb-4">
             <Shield className="w-7 h-7 text-slate-950 stroke-[2.5]" />
           </div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">Admin Control Panel</h1>
-          <p className="text-xs text-slate-400 mt-1">Authorized personnel and store managers only</p>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">
+            Admin Control Panel
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Authorized personnel and store managers only
+          </p>
         </div>
 
         {error && (
@@ -121,14 +127,16 @@ export default function AdminLoginPage() {
                 Signing in...
               </>
             ) : (
-              'Sign In to Dashboard'
+              "Sign In to Dashboard"
             )}
           </button>
         </form>
 
         {/* Quick Demo Fill Helper */}
         <div className="mt-6 pt-6 border-t border-white/5 text-center">
-          <p className="text-[11px] text-slate-500 mb-2">Seeded Default Credentials:</p>
+          <p className="text-[11px] text-slate-500 mb-2">
+            Seeded Default Credentials:
+          </p>
           <button
             type="button"
             onClick={handleFillDemo}
