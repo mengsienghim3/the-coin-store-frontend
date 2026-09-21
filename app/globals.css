@@ -55,16 +55,32 @@ body {
   min-height: 100vh;
   /* Cosmic marketplace radial aura background */
   background-image:
-    radial-gradient(circle at 18% 12%, rgba(168, 85, 247, 0.18) 0%, transparent 45%),
-    radial-gradient(circle at 85% 18%, rgba(236, 72, 153, 0.16) 0%, transparent 40%),
-    radial-gradient(circle at 50% 60%, rgba(99, 102, 241, 0.12) 0%, transparent 55%),
+    radial-gradient(
+      circle at 18% 12%,
+      rgba(168, 85, 247, 0.18) 0%,
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 85% 18%,
+      rgba(236, 72, 153, 0.16) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 50% 60%,
+      rgba(99, 102, 241, 0.12) 0%,
+      transparent 55%
+    ),
     linear-gradient(180deg, #0b091f 0%, #080617 100%);
   background-attachment: fixed;
 }
 
 /* Glassmorphism Cards inspired by reference design */
 .glass-marketplace-card {
-  background: linear-gradient(160deg, rgba(25, 22, 54, 0.75) 0%, rgba(13, 11, 32, 0.9) 100%);
+  background: linear-gradient(
+    160deg,
+    rgba(25, 22, 54, 0.75) 0%,
+    rgba(13, 11, 32, 0.9) 100%
+  );
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -72,23 +88,40 @@ body {
 
 .glass-marketplace-card:hover {
   border-color: rgba(168, 85, 247, 0.45);
-  box-shadow: 0 12px 35px -10px rgba(168, 85, 247, 0.25), 0 0 20px -5px rgba(236, 72, 153, 0.15);
+  box-shadow:
+    0 12px 35px -10px rgba(168, 85, 247, 0.25),
+    0 0 20px -5px rgba(236, 72, 153, 0.15);
 }
 
 /* Floating Reaction Badges keyframes */
 @keyframes float-badge-1 {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-8px) rotate(1deg); }
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+  }
 }
 
 @keyframes float-badge-2 {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(8px) rotate(-1deg); }
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(8px) rotate(-1deg);
+  }
 }
 
 @keyframes float-badge-3 {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-6px) rotate(-2deg); }
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(-2deg);
+  }
 }
 
 .animate-float-1 {
@@ -105,7 +138,13 @@ body {
 
 /* Gradient Text */
 .text-marketplace-gradient {
-  background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 40%, #c084fc 80%, #f472b6 100%);
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #e2e8f0 40%,
+    #c084fc 80%,
+    #f472b6 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

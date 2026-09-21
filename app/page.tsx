@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Gamepad2,
   Gift,
@@ -13,15 +13,17 @@ import {
   ChevronRight,
   Headphones,
   ArrowUpRight,
-  Flame,
   ThumbsUp,
-  CreditCard,
-  CheckCircle2,
-} from 'lucide-react';
-import { fetchBanners, fetchGames, fetchGiftCards, Banner, Game, GiftCard } from '../lib/api';
-import { QuickTopupModal } from '../components/quick-topup-modal';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
+} from "lucide-react";
+import {
+  fetchBanners,
+  fetchGames,
+  fetchGiftCards,
+  Banner,
+  Game,
+  GiftCard,
+} from "../lib/api";
+import { QuickTopupModal } from "../components/quick-topup-modal";
 
 export default function StoreHomePage() {
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -30,13 +32,15 @@ export default function StoreHomePage() {
   const [loading, setLoading] = useState(true);
 
   // Active Tab: 'games' | 'giftcards'
-  const [activeTab, setActiveTab] = useState<'games' | 'giftcards'>('games');
+  const [activeTab, setActiveTab] = useState<"games" | "giftcards">("games");
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Selected item for modal
-  const [selectedItem, setSelectedItem] = useState<(Game | GiftCard) | null>(null);
+  const [selectedItem, setSelectedItem] = useState<(Game | GiftCard) | null>(
+    null,
+  );
 
   useEffect(() => {
     Promise.all([fetchBanners(), fetchGames(), fetchGiftCards()]).then(
@@ -45,7 +49,7 @@ export default function StoreHomePage() {
         setGames(gameData);
         setGiftCards(giftCardData);
         setLoading(false);
-      }
+      },
     );
   }, []);
 
@@ -65,19 +69,21 @@ export default function StoreHomePage() {
 
   const prevBanner = () => {
     if (banners.length === 0) return;
-    setActiveBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
+    setActiveBannerIndex(
+      (prev) => (prev - 1 + banners.length) % banners.length,
+    );
   };
 
   // Reset subcategory when switching tabs
-  const handleTabChange = (tab: 'games' | 'giftcards') => {
+  const handleTabChange = (tab: "games" | "giftcards") => {
     setActiveTab(tab);
-    setSelectedSubCategory('all');
+    setSelectedSubCategory("all");
   };
 
   // Filter games
   const filteredGames = games.filter((g) => {
     const matchesCat =
-      selectedSubCategory === 'all' ||
+      selectedSubCategory === "all" ||
       g.category.toLowerCase() === selectedSubCategory.toLowerCase();
     const matchesSearch =
       g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -88,7 +94,7 @@ export default function StoreHomePage() {
   // Filter gift cards
   const filteredGiftCards = giftCards.filter((gc) => {
     const matchesCat =
-      selectedSubCategory === 'all' ||
+      selectedSubCategory === "all" ||
       gc.category.toLowerCase() === selectedSubCategory.toLowerCase();
     const matchesSearch =
       gc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -137,14 +143,14 @@ export default function StoreHomePage() {
           {/* Navigation Links */}
           <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-300">
             <button
-              onClick={() => handleTabChange('games')}
-              className={`transition-colors ${activeTab === 'games' ? 'text-purple-400 font-bold' : 'hover:text-white'}`}
+              onClick={() => handleTabChange("games")}
+              className={`transition-colors ${activeTab === "games" ? "text-purple-400 font-bold" : "hover:text-white"}`}
             >
               Games
             </button>
             <button
-              onClick={() => handleTabChange('giftcards')}
-              className={`transition-colors ${activeTab === 'giftcards' ? 'text-purple-400 font-bold' : 'hover:text-white'}`}
+              onClick={() => handleTabChange("giftcards")}
+              className={`transition-colors ${activeTab === "giftcards" ? "text-purple-400 font-bold" : "hover:text-white"}`}
             >
               Gift Cards
             </button>
@@ -159,7 +165,11 @@ export default function StoreHomePage() {
           {/* Right Action: Support Badge */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => alert('Customer VIP Support: 24/7 Live Concierge & Telegram Ready')}
+              onClick={() =>
+                alert(
+                  "Customer VIP Support: 24/7 Live Concierge & Telegram Ready",
+                )
+              }
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 hover:text-purple-300 transition-all"
             >
               <Headphones className="w-3.5 h-3.5 text-purple-400" />
@@ -170,183 +180,94 @@ export default function StoreHomePage() {
       </header>
 
       {/* ========================================================================= */}
-      {/* 2. HERO & BANNER SECTION (Inspired by Reference Design Hero)              */}
+      {/* 2. SIMPLE BANNER (Directly Under Nav Bar)                                 */}
       {/* ========================================================================= */}
-      <section className="relative overflow-hidden pt-8 sm:pt-14 pb-12 sm:pb-20">
-        {/* Atmospheric ambient glows */}
-        <div className="absolute top-1/4 left-10 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/3 right-10 w-96 h-96 bg-pink-500/15 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Left Column: Headline & Dual Action Pills */}
-            <div className="lg:col-span-6 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-xs font-semibold">
-                <Sparkles className="w-3.5 h-3.5 text-pink-400" />
-                <span>Premier Digital Gaming & Voucher Exchange</span>
+      {banners.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2 w-full">
+          <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl group bg-[#110e2d] aspect-[21/9] sm:aspect-[24/8] max-h-[360px]">
+            {/* Banner Image Slides */}
+            {banners.map((banner, index) => (
+              <div
+                key={banner.id}
+                className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                  index === activeBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                }`}
+              >
+                <img
+                  src={banner.imageUrl}
+                  alt={banner.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0b091f] via-[#0b091f]/30 to-transparent" />
+                <div className="absolute bottom-6 left-6 sm:bottom-8 sm:left-8 z-20 max-w-xl">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-600/30 border border-purple-400/40 text-purple-200 text-[11px] font-bold uppercase tracking-wider mb-2 backdrop-blur-md">
+                    <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+                    Special Promotion
+                  </span>
+                  <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight leading-tight drop-shadow-md">
+                    {banner.title}
+                  </h2>
+                </div>
               </div>
+            ))}
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1]">
-                Buy, Top-Up And <br />
-                <span className="text-marketplace-gradient">Collect Game Diamonds.</span>
-              </h1>
-
-              <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-lg">
-                The world’s most trusted automated marketplace for instant Mobile Legends diamonds, Free Fire, PUBG UC, and digital gaming gift cards.
-              </p>
-
-              {/* Dual Pill CTA Buttons (Just like Upload & Explore in reference image) */}
-              <div className="flex flex-wrap items-center gap-4 pt-2">
+            {/* Carousel Navigation Arrows */}
+            {banners.length > 1 && (
+              <>
                 <button
-                  onClick={() => {
-                    handleTabChange('games');
-                    document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="px-7 py-3.5 rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-amber-400 text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-purple-600/30 hover:opacity-95 hover:scale-105 transition-all"
+                  onClick={prevBanner}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                  aria-label="Previous banner"
                 >
-                  Top Up Games
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={() => {
-                    handleTabChange('giftcards');
-                    document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="px-7 py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] border border-white/20 text-white font-bold text-xs sm:text-sm uppercase tracking-wider hover:scale-105 transition-all backdrop-blur-md"
+                  onClick={nextBanner}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                  aria-label="Next banner"
                 >
-                  Explore Gift Cards
+                  <ChevronRight className="w-5 h-5" />
                 </button>
-              </div>
+              </>
+            )}
 
-              {/* Mini Stats Bar */}
-              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/10 max-w-md">
-                <div>
-                  <div className="text-xl sm:text-2xl font-black text-white">0.2s</div>
-                  <div className="text-[11px] text-slate-400 uppercase tracking-wide">Instant Reload</div>
-                </div>
-                <div>
-                  <div className="text-xl sm:text-2xl font-black text-purple-400">100%</div>
-                  <div className="text-[11px] text-slate-400 uppercase tracking-wide">Automated API</div>
-                </div>
-                <div>
-                  <div className="text-xl sm:text-2xl font-black text-pink-400">24/7</div>
-                  <div className="text-[11px] text-slate-400 uppercase tracking-wide">VIP Delivery</div>
-                </div>
+            {/* Pagination Indicators */}
+            {banners.length > 1 && (
+              <div className="absolute bottom-4 right-6 z-20 flex items-center gap-2">
+                {banners.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveBannerIndex(i)}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      i === activeBannerIndex
+                        ? 'w-8 bg-purple-400 shadow-md shadow-purple-400/50'
+                        : 'w-2 bg-white/30'
+                    }`}
+                    aria-label={`Slide ${i + 1}`}
+                  />
+                ))}
               </div>
-            </div>
-
-            {/* Right Column: Floating Visual Showcase Card with Interactive Reaction Badges */}
-            <div className="lg:col-span-6 relative flex items-center justify-center">
-              {/* Central Floating Card (like reference image sheep avatar card) */}
-              <div className="relative w-full max-w-md aspect-[4/3] sm:aspect-[16/11] rounded-[36px] p-2 bg-gradient-to-tr from-purple-500/30 via-pink-500/20 to-indigo-500/30 border border-white/20 shadow-2xl shadow-purple-950/80 backdrop-blur-2xl overflow-hidden group">
-                {banners.length > 0 ? (
-                  <div className="relative w-full h-full rounded-[30px] overflow-hidden">
-                    <img
-                      src={currentBanner?.imageUrl}
-                      alt={currentBanner?.title || 'Featured Promotion'}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0e0c24] via-[#0e0c24]/40 to-transparent" />
-                    <div className="absolute bottom-6 left-6 right-6 z-10">
-                      <span className="inline-block px-2.5 py-0.5 rounded-full bg-pink-500/30 border border-pink-400/40 text-[10px] font-bold text-pink-300 uppercase tracking-wider mb-1.5 backdrop-blur-md">
-                        Featured Promo
-                      </span>
-                      <h3 className="text-lg sm:text-xl font-black text-white leading-tight drop-shadow-md">
-                        {currentBanner?.title}
-                      </h3>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="w-full h-full rounded-[30px] bg-[#141133] flex items-center justify-center text-purple-300">
-                    <Gamepad2 className="w-16 h-16" />
-                  </div>
-                )}
-
-                {/* Banner Carousel Controls */}
-                {banners.length > 1 && (
-                  <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-2.5 py-1 border border-white/15">
-                    <button
-                      onClick={prevBanner}
-                      className="text-slate-300 hover:text-white p-0.5"
-                      aria-label="Previous banner"
-                    >
-                      <ChevronLeft className="w-3.5 h-3.5" />
-                    </button>
-                    <span className="text-[10px] font-mono text-slate-300">
-                      {activeBannerIndex + 1}/{banners.length}
-                    </span>
-                    <button
-                      onClick={nextBanner}
-                      className="text-slate-300 hover:text-white p-0.5"
-                      aria-label="Next banner"
-                    >
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Floating Reaction Badges (Directly inspired by reference image!) */}
-              {/* Badge 1: Top Left */}
-              <div className="absolute -top-4 -left-2 sm:-left-6 z-20 px-3.5 py-2 rounded-2xl bg-[#1d1844]/90 border border-purple-400/40 shadow-xl backdrop-blur-xl flex items-center gap-2 animate-float-1 pointer-events-none">
-                <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                  <ThumbsUp className="w-3.5 h-3.5 fill-current" />
-                </div>
-                <div>
-                  <div className="text-[10px] font-extrabold text-white">Instant Top-Up</div>
-                  <div className="text-[9px] text-purple-300">100% Automated</div>
-                </div>
-              </div>
-
-              {/* Badge 2: Top Right */}
-              <div className="absolute -top-6 -right-2 sm:-right-4 z-20 px-3.5 py-2 rounded-2xl bg-[#1d1844]/90 border border-pink-400/40 shadow-xl backdrop-blur-xl flex items-center gap-2 animate-float-2 pointer-events-none">
-                <div className="w-7 h-7 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center">
-                  <Sparkles className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <div className="text-[10px] font-extrabold text-white">Best Discount</div>
-                  <div className="text-[9px] text-pink-300">Direct Reseller</div>
-                </div>
-              </div>
-
-              {/* Badge 3: Bottom Left */}
-              <div className="absolute -bottom-5 -left-4 z-20 px-3.5 py-2 rounded-2xl bg-[#1d1844]/90 border border-cyan-400/40 shadow-xl backdrop-blur-xl flex items-center gap-2 animate-float-3 pointer-events-none">
-                <div className="w-7 h-7 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
-                  <Zap className="w-3.5 h-3.5 fill-current" />
-                </div>
-                <div>
-                  <div className="text-[10px] font-extrabold text-white">0.2s Dispatch</div>
-                  <div className="text-[9px] text-cyan-300">Zero Wait Time</div>
-                </div>
-              </div>
-
-              {/* Badge 4: Bottom Right */}
-              <div className="absolute -bottom-4 -right-2 sm:-right-6 z-20 px-3.5 py-2 rounded-2xl bg-[#1d1844]/90 border border-emerald-400/40 shadow-xl backdrop-blur-xl flex items-center gap-2 animate-float-1 pointer-events-none">
-                <div className="w-7 h-7 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <div className="text-[10px] font-extrabold text-white">Genuine Keys</div>
-                  <div className="text-[9px] text-emerald-300">Official Partners</div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ========================================================================= */}
       {/* 3. SECTION TABS: "GAME TOP-UP" vs "DIGITAL GIFT CARDS"                    */}
       {/* ========================================================================= */}
-      <section id="catalog" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      <section
+        id="catalog"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full"
+      >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/[0.08]">
           {/* Main Dual Toggle Tabs */}
           <div className="inline-flex p-1.5 rounded-2xl bg-[#161239] border border-white/10 shadow-inner">
             <button
-              onClick={() => handleTabChange('games')}
+              onClick={() => handleTabChange("games")}
               className={`flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs sm:text-sm font-black transition-all ${
-                activeTab === 'games'
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-600/30 scale-100'
-                  : 'text-slate-400 hover:text-white'
+                activeTab === "games"
+                  ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-600/30 scale-100"
+                  : "text-slate-400 hover:text-white"
               }`}
             >
               <Gamepad2 className="w-4 h-4" />
@@ -354,11 +275,11 @@ export default function StoreHomePage() {
             </button>
 
             <button
-              onClick={() => handleTabChange('giftcards')}
+              onClick={() => handleTabChange("giftcards")}
               className={`flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs sm:text-sm font-black transition-all ${
-                activeTab === 'giftcards'
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-600/30 scale-100'
-                  : 'text-slate-400 hover:text-white'
+                activeTab === "giftcards"
+                  ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-600/30 scale-100"
+                  : "text-slate-400 hover:text-white"
               }`}
             >
               <Gift className="w-4 h-4" />
@@ -368,31 +289,33 @@ export default function StoreHomePage() {
 
           {/* Subcategory Filter Chips */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
-            {activeTab === 'games'
-              ? ['all', 'MOBA', 'Battle Royale', 'RPG', 'Shooter'].map((cat) => (
+            {activeTab === "games"
+              ? ["all", "MOBA", "Battle Royale", "RPG", "Shooter"].map(
+                  (cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedSubCategory(cat)}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
+                        selectedSubCategory === cat
+                          ? "bg-white text-slate-950 font-bold"
+                          : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      {cat === "all" ? "All Games" : cat}
+                    </button>
+                  ),
+                )
+              : ["all", "PC & Steam", "Mobile & Apps", "Console"].map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setSelectedSubCategory(cat)}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
                       selectedSubCategory === cat
-                        ? 'bg-white text-slate-950 font-bold'
-                        : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+                        ? "bg-white text-slate-950 font-bold"
+                        : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
                     }`}
                   >
-                    {cat === 'all' ? 'All Games' : cat}
-                  </button>
-                ))
-              : ['all', 'PC & Steam', 'Mobile & Apps', 'Console'].map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedSubCategory(cat)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
-                      selectedSubCategory === cat
-                        ? 'bg-white text-slate-950 font-bold'
-                        : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    {cat === 'all' ? 'All Gift Cards' : cat}
+                    {cat === "all" ? "All Gift Cards" : cat}
                   </button>
                 ))}
           </div>
@@ -405,10 +328,13 @@ export default function StoreHomePage() {
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="aspect-[3/4] rounded-3xl bg-white/5 animate-pulse" />
+                <div
+                  key={i}
+                  className="aspect-[3/4] rounded-3xl bg-white/5 animate-pulse"
+                />
               ))}
             </div>
-          ) : activeTab === 'games' ? (
+          ) : activeTab === "games" ? (
             /* GAMES LISTING */
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
               {filteredGames.map((game) => (
@@ -443,8 +369,12 @@ export default function StoreHomePage() {
 
                   <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
                     <div>
-                      <span className="text-[10px] text-slate-400 block leading-none">From</span>
-                      <span className="text-xs font-black text-amber-400">{game.startingPrice || '$0.99'}</span>
+                      <span className="text-[10px] text-slate-400 block leading-none">
+                        From
+                      </span>
+                      <span className="text-xs font-black text-amber-400">
+                        {game.startingPrice || "$0.99"}
+                      </span>
                     </div>
                     <span className="text-purple-300 font-bold text-xs flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
                       Reload <ArrowUpRight className="w-3.5 h-3.5" />
@@ -487,8 +417,12 @@ export default function StoreHomePage() {
 
                   <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
                     <div>
-                      <span className="text-[10px] text-slate-400 block leading-none">From</span>
-                      <span className="text-xs font-black text-amber-400">{card.startingPrice}</span>
+                      <span className="text-[10px] text-slate-400 block leading-none">
+                        From
+                      </span>
+                      <span className="text-xs font-black text-amber-400">
+                        {card.startingPrice}
+                      </span>
                     </div>
                     <span className="text-pink-300 font-bold text-xs flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
                       Buy <ArrowUpRight className="w-3.5 h-3.5" />
@@ -504,20 +438,28 @@ export default function StoreHomePage() {
       {/* Quick Top-Up / Purchase Modal */}
       <QuickTopupModal
         item={selectedItem}
-        itemType={activeTab === 'games' ? 'game' : 'giftcard'}
+        itemType={activeTab === "games" ? "game" : "giftcard"}
         onClose={() => setSelectedItem(null)}
       />
 
       {/* Modern Marketplace Footer */}
-      <footer id="support" className="mt-24 border-t border-white/10 bg-[#080617] py-12">
+      <footer
+        id="support"
+        className="mt-24 border-t border-white/10 bg-[#080617] py-12"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-400">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
               <Gamepad2 className="w-4 h-4" />
             </div>
             <div>
-              <p className="font-bold text-white">The Coin Store — Digital Marketplace</p>
-              <p className="text-[11px] text-slate-500">Fast, automated delivery for game currencies and digital gift vouchers.</p>
+              <p className="font-bold text-white">
+                The Coin Store — Digital Marketplace
+              </p>
+              <p className="text-[11px] text-slate-500">
+                Fast, automated delivery for game currencies and digital gift
+                vouchers.
+              </p>
             </div>
           </div>
 
@@ -528,7 +470,10 @@ export default function StoreHomePage() {
             <Link href="/" className="hover:text-purple-400 transition-colors">
               Privacy Policy
             </Link>
-            <a href="#support" className="hover:text-purple-400 transition-colors">
+            <a
+              href="#support"
+              className="hover:text-purple-400 transition-colors"
+            >
               VIP Concierge
             </a>
           </div>
