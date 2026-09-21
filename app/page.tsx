@@ -190,7 +190,9 @@ export default function StoreHomePage() {
               <div
                 key={banner.id}
                 className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                  index === activeBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                  index === activeBannerIndex
+                    ? "opacity-100 z-10"
+                    : "opacity-0 z-0 pointer-events-none"
                 }`}
               >
                 <img
@@ -240,8 +242,8 @@ export default function StoreHomePage() {
                     onClick={() => setActiveBannerIndex(i)}
                     className={`h-1.5 rounded-full transition-all duration-300 ${
                       i === activeBannerIndex
-                        ? 'w-8 bg-purple-400 shadow-md shadow-purple-400/50'
-                        : 'w-2 bg-white/30'
+                        ? "w-8 bg-purple-400 shadow-md shadow-purple-400/50"
+                        : "w-2 bg-white/30"
                     }`}
                     aria-label={`Slide ${i + 1}`}
                   />

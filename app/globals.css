@@ -163,3 +163,14 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Mobile Safe Area Padding */
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top, 0px), 12px);
+}
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+}
+.pb-safe-nav {
+  padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 12px) + 5rem);
+}
