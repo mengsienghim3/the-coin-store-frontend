@@ -53,6 +53,22 @@ export interface AuthResponse {
   user: AdminUser;
 }
 
+export interface ProviderProfile {
+  userId: string;
+  name: string;
+  email: string;
+  balanceUsd: number;
+  tier: {
+    name: string;
+    discountLabel: string;
+  };
+  apiKey: {
+    name: string;
+    keyPrefix: string;
+    rateLimitPerMin: number;
+  };
+}
+
 // Fallback preview banners
 const FALLBACK_BANNERS: Banner[] = [
   {
@@ -438,7 +454,9 @@ export async function uploadImage(file: File): Promise<{
 
   const json = await res.json();
   if (!res.ok) {
-    throw new Error(json.error?.message || "Failed to upload image to Cloudflare R2");
+    throw new Error(
+      json.error?.message || "Failed to upload image to Cloudflare R2",
+    );
   }
 
   return json.data;
@@ -495,6 +513,22 @@ export async function verifyAdminSession(
     const json = await res.json();
     return json.data || null;
   } catch {
+    return null;
+  }
+}
+
+// --- Provider / Reseller API ---
+export async function fetchProviderProfile(): Promise<ProviderProfile | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/provider/profile`, {
+      cache: "no-store",
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+    const json = await res.json();
+    return json.data || null;
+  } catch (err) {
+    console.warn("Failed to fetch provider profile:", err);
     return null;
   }
 }

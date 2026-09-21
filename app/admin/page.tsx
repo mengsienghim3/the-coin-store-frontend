@@ -35,6 +35,9 @@ import {
   ArrowUpRight,
   Sparkles,
   ShoppingBag,
+  Wallet,
+  Key,
+  BadgePercent,
 } from "lucide-react";
 import {
   fetchBanners,
@@ -45,8 +48,10 @@ import {
   getStoredAdmin,
   clearStoredAdmin,
   verifyAdminSession,
+  fetchProviderProfile,
   Banner,
   AdminUser,
+  ProviderProfile,
 } from "../../lib/api";
 
 export default function AdminDashboardPage() {
@@ -56,6 +61,11 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  // Provider Profile & Reseller Balance State
+  const [providerProfile, setProviderProfile] =
+    useState<ProviderProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   // Primary Navigation View: 'banners' | 'sales'
   const [adminView, setAdminView] = useState<"banners" | "sales">("banners");
@@ -71,7 +81,9 @@ export default function AdminDashboardPage() {
   // Cloudflare R2 Upload states for Edit modal
   const [isEditUploadingR2, setIsEditUploadingR2] = useState(false);
   const [uploadEditSuccessR2, setUploadEditSuccessR2] = useState(false);
-  const [uploadEditErrorR2, setUploadEditErrorR2] = useState<string | null>(null);
+  const [uploadEditErrorR2, setUploadEditErrorR2] = useState<string | null>(
+    null,
+  );
 
   // Edit banner state
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
@@ -108,6 +120,7 @@ export default function AdminDashboardPage() {
     }
     setAdmin(session.user);
     loadBanners();
+    loadProfile();
 
     // Verify session validity with backend
     verifyAdminSession(session.token).then((verifiedUser) => {
@@ -119,6 +132,20 @@ export default function AdminDashboardPage() {
       }
     });
   }, [router]);
+
+  const loadProfile = async () => {
+    setProfileLoading(true);
+    try {
+      const data = await fetchProviderProfile();
+      if (data) {
+        setProviderProfile(data);
+      }
+    } catch (err) {
+      console.error("Failed to load provider profile", err);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   const loadBanners = async () => {
     setLoading(true);
@@ -174,7 +201,9 @@ export default function AdminDashboardPage() {
         setUploadSuccessR2(true);
       } catch (err: unknown) {
         setUploadErrorR2(
-          err instanceof Error ? err.message : "Failed to upload image to Cloudflare R2",
+          err instanceof Error
+            ? err.message
+            : "Failed to upload image to Cloudflare R2",
         );
       } finally {
         setIsUploadingR2(false);
@@ -189,7 +218,9 @@ export default function AdminDashboardPage() {
         setUploadEditSuccessR2(true);
       } catch (err: unknown) {
         setUploadEditErrorR2(
-          err instanceof Error ? err.message : "Failed to upload image to Cloudflare R2",
+          err instanceof Error
+            ? err.message
+            : "Failed to upload image to Cloudflare R2",
         );
       } finally {
         setIsEditUploadingR2(false);
@@ -420,6 +451,76 @@ export default function AdminDashboardPage() {
                 </div>
 
                 <div>
+                  <div className="flex items-center justify-between px-3 mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
+                      Provider Reseller Account
+                    </span>
+                    <button
+                      onClick={loadProfile}
+                      disabled={profileLoading}
+                      className="text-[10px] text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors"
+                      title="Sync provider balance"
+                    >
+                      <RefreshCw
+                        className={`w-3 h-3 ${profileLoading ? "animate-spin text-purple-400" : ""}`}
+                      />
+                      <span>Sync</span>
+                    </button>
+                  </div>
+                  <div className="px-3.5 py-3 rounded-2xl bg-gradient-to-br from-purple-950/30 via-white/[0.02] to-emerald-950/20 border border-purple-500/20 space-y-2.5 text-xs">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-slate-400 text-[10px] block font-mono">
+                          Reseller Partner
+                        </span>
+                        <span className="text-white font-bold text-xs block">
+                          {providerProfile?.name || "KAS Reseller"}
+                        </span>
+                        {providerProfile?.email && (
+                          <span className="text-[10px] text-slate-400 font-mono block truncate max-w-[180px]">
+                            {providerProfile.email}
+                          </span>
+                        )}
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-[10px] font-bold uppercase tracking-wider">
+                        {providerProfile?.tier?.name || "Growth"}
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-black/40 border border-emerald-500/20 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Wallet className="w-4 h-4 text-emerald-400" />
+                        <span className="text-slate-300 text-[11px]">
+                          Wholesale Balance
+                        </span>
+                      </div>
+                      <span className="text-sm font-black text-emerald-400 font-mono">
+                        ${Number(providerProfile?.balanceUsd ?? 0).toFixed(2)}{" "}
+                        USD
+                      </span>
+                    </div>
+
+                    {providerProfile?.tier?.discountLabel && (
+                      <div className="text-[10px] text-purple-300/80 italic leading-tight">
+                        {providerProfile.tier.discountLabel}
+                      </div>
+                    )}
+
+                    {providerProfile?.apiKey && (
+                      <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                        <span className="flex items-center gap-1">
+                          <Key className="w-3 h-3 text-amber-400" />
+                          {providerProfile.apiKey.keyPrefix}
+                        </span>
+                        <span className="text-slate-500">
+                          {providerProfile.apiKey.rateLimitPerMin} req/m
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 block mb-2 font-mono">
                     Storage & Cloudflare Edge
                   </span>
@@ -525,6 +626,44 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Provider Wholesale Balance Pill */}
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-purple-950/20 to-slate-900 border border-emerald-500/30 shadow-sm">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <Wallet className="w-4 h-4" />
+              </div>
+              <div className="flex flex-col text-left">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                    Wholesale Balance
+                  </span>
+                  {providerProfile?.tier?.name && (
+                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">
+                      {providerProfile.tier.name}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-extrabold text-sm text-emerald-400 font-mono leading-tight">
+                    {profileLoading && !providerProfile ? (
+                      <span className="text-xs text-slate-400">Syncing...</span>
+                    ) : (
+                      `$${Number(providerProfile?.balanceUsd ?? 0).toFixed(2)} USD`
+                    )}
+                  </span>
+                  <button
+                    onClick={loadProfile}
+                    disabled={profileLoading}
+                    title="Refresh Provider Reseller Balance"
+                    className="p-1 rounded-md text-slate-400 hover:text-emerald-400 transition-colors"
+                  >
+                    <RefreshCw
+                      className={`w-3 h-3 ${profileLoading ? "animate-spin text-emerald-400" : ""}`}
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <Link
               href="/"
               target="_blank"
@@ -595,8 +734,44 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
+        {/* Mobile Reseller Balance Quick Bar */}
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-950/40 via-purple-950/30 to-[#0e0c24] border border-emerald-500/25 mt-2">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <Wallet className="w-3 h-3" />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-slate-300">Balance:</span>
+              <span className="text-xs font-black text-emerald-400 font-mono">
+                {profileLoading && !providerProfile ? (
+                  <span className="text-[10px] text-slate-400">Syncing...</span>
+                ) : (
+                  `$${Number(providerProfile?.balanceUsd ?? 0).toFixed(2)} USD`
+                )}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {providerProfile?.tier?.name && (
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                {providerProfile.tier.name}
+              </span>
+            )}
+            <button
+              onClick={loadProfile}
+              disabled={profileLoading}
+              className="p-1 rounded text-slate-400 hover:text-emerald-400 transition-colors"
+              title="Refresh Provider Balance"
+            >
+              <RefreshCw
+                className={`w-3 h-3 ${profileLoading ? "animate-spin text-emerald-400" : ""}`}
+              />
+            </button>
+          </div>
+        </div>
+
         {/* Mobile View Selector Chips */}
-        <div className="flex items-center gap-2 mt-1 pt-2 border-t border-white/5">
+        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/5">
           <button
             onClick={() => setAdminView("sales")}
             className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 ${
@@ -643,7 +818,8 @@ export default function AdminDashboardPage() {
                     Sales & Operations Dashboard
                   </h2>
                   <p className="text-xs md:text-sm text-slate-400 mt-1 max-w-xl">
-                    Live monitoring of digital diamond reloads, payment processing, and promotional campaign distribution.
+                    Live monitoring of digital diamond reloads, payment
+                    processing, and promotional campaign distribution.
                   </p>
                 </div>
 
@@ -658,21 +834,100 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
+            {/* Provider Reseller Live Telemetry Card */}
+            <div className="rounded-3xl bg-gradient-to-br from-[#120f2e] via-[#0d1024] to-[#070b16] border border-emerald-500/20 p-6 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-emerald-500/10 via-purple-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-xs font-bold text-emerald-300 inline-flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      Live Reseller Account
+                    </span>
+                    {providerProfile?.tier?.name && (
+                      <span className="px-3 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-xs font-bold text-purple-300 uppercase tracking-wider">
+                        Tier: {providerProfile.tier.name}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                    <span>{providerProfile?.name || "KAS Reseller Partner"}</span>
+                    <span className="text-xs font-mono font-normal text-slate-400">
+                      ({providerProfile?.email || "tg_581867300@kasplay.kascambodia.com"})
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-300 font-medium max-w-xl">
+                    {providerProfile?.tier?.discountLabel ||
+                      "Extended Wholesale Discounts on Every Sale"}
+                  </p>
+                  {providerProfile?.userId && (
+                    <div className="text-[11px] text-slate-500 font-mono">
+                      Partner ID:{" "}
+                      <span className="text-slate-400">
+                        {providerProfile.userId}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4 bg-black/40 border border-white/10 p-4 rounded-2xl">
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400">
+                      Wholesale Balance
+                    </span>
+                    <div className="text-3xl font-black text-emerald-400 font-mono">
+                      {profileLoading && !providerProfile ? (
+                        <span className="text-base text-slate-400">Syncing...</span>
+                      ) : (
+                        `$${Number(providerProfile?.balanceUsd ?? 0).toFixed(2)} USD`
+                      )}
+                    </div>
+                    {providerProfile?.apiKey && (
+                      <div className="text-[10px] font-mono text-slate-400 flex items-center gap-2">
+                        <span className="text-amber-400 flex items-center gap-1">
+                          <Key className="w-3 h-3" />
+                          {providerProfile.apiKey.name}:{" "}
+                          {providerProfile.apiKey.keyPrefix}
+                        </span>
+                        <span>•</span>
+                        <span>{providerProfile.apiKey.rateLimitPerMin} req/m</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={loadProfile}
+                    disabled={profileLoading}
+                    className="px-4 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-2 transition-all active:scale-95 ml-auto"
+                    title="Refresh Reseller Balance"
+                  >
+                    <RefreshCw
+                      className={`w-4 h-4 ${profileLoading ? "animate-spin text-emerald-400" : ""}`}
+                    />
+                    <span>Sync Balance</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* KPI Metrics Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-              <div className="rounded-2xl bg-[#0e111a] border border-white/10 p-5 shadow-xl">
+              <div className="rounded-2xl bg-[#0e111a] border border-emerald-500/20 p-5 shadow-xl">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
-                    Gross Sales
+                    Wholesale Balance
                   </span>
                   <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                    <DollarSign className="w-4 h-4" />
+                    <Wallet className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-2xl font-black text-white">$14,892.40</div>
+                <div className="text-2xl font-black text-emerald-400 font-mono">
+                  ${Number(providerProfile?.balanceUsd ?? 0).toFixed(2)}
+                </div>
                 <div className="flex items-center gap-1 text-[11px] text-emerald-400 mt-1">
                   <TrendingUp className="w-3.5 h-3.5" />
-                  <span>+24.8% vs last week</span>
+                  <span>Wholesale API Connected</span>
                 </div>
               </div>
 
@@ -685,7 +940,9 @@ export default function AdminDashboardPage() {
                     <ShoppingBag className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-2xl font-black text-white">1,280 Orders</div>
+                <div className="text-2xl font-black text-white">
+                  1,280 Orders
+                </div>
                 <div className="flex items-center gap-1 text-[11px] text-purple-300 mt-1">
                   <Zap className="w-3.5 h-3.5" />
                   <span>Instant auto-fulfillment</span>
@@ -727,10 +984,13 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="text-sm font-black text-emerald-400 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  100% Operational
+                  {providerProfile?.tier?.name || "Growth"} Tier Live
                 </div>
-                <div className="text-[11px] text-slate-500 mt-1 font-mono">
-                  Avg dispatch: 1.8s
+                <div className="text-[11px] text-slate-400 mt-1 font-mono flex items-center justify-between">
+                  <span>{providerProfile?.apiKey?.keyPrefix || "kp_live_..."}</span>
+                  <span className="text-slate-500">
+                    {providerProfile?.apiKey?.rateLimitPerMin || 60} req/m
+                  </span>
                 </div>
               </div>
             </div>
@@ -743,7 +1003,10 @@ export default function AdminDashboardPage() {
                     <Clock className="w-4 h-4 text-purple-400" />
                     Live Top-Up Transaction Feed
                   </h3>
-                  <p className="text-xs text-slate-400">Recent diamond deliveries handled through the reseller gateway</p>
+                  <p className="text-xs text-slate-400">
+                    Recent diamond deliveries handled through the reseller
+                    gateway
+                  </p>
                 </div>
                 <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-bold text-emerald-300">
                   Bakong KHQR Active
@@ -752,24 +1015,67 @@ export default function AdminDashboardPage() {
 
               <div className="divide-y divide-white/5 text-xs">
                 {[
-                  { id: "ORD-9921", game: "Mobile Legends", item: "514 Diamonds", user: "ML-789212 (2091)", price: "$9.50", time: "2 min ago", status: "Completed" },
-                  { id: "ORD-9920", game: "Free Fire", item: "1,080 Diamonds", user: "FF-89912041", price: "$10.00", time: "5 min ago", status: "Completed" },
-                  { id: "ORD-9919", game: "PUBG Mobile", item: "660 UC", user: "PUBG-5192831", price: "$9.99", time: "11 min ago", status: "Completed" },
-                  { id: "ORD-9918", game: "Steam Wallet", item: "$10 USD Code", user: "customer@gmail.com", price: "$10.00", time: "18 min ago", status: "Delivered" },
+                  {
+                    id: "ORD-9921",
+                    game: "Mobile Legends",
+                    item: "514 Diamonds",
+                    user: "ML-789212 (2091)",
+                    price: "$9.50",
+                    time: "2 min ago",
+                    status: "Completed",
+                  },
+                  {
+                    id: "ORD-9920",
+                    game: "Free Fire",
+                    item: "1,080 Diamonds",
+                    user: "FF-89912041",
+                    price: "$10.00",
+                    time: "5 min ago",
+                    status: "Completed",
+                  },
+                  {
+                    id: "ORD-9919",
+                    game: "PUBG Mobile",
+                    item: "660 UC",
+                    user: "PUBG-5192831",
+                    price: "$9.99",
+                    time: "11 min ago",
+                    status: "Completed",
+                  },
+                  {
+                    id: "ORD-9918",
+                    game: "Steam Wallet",
+                    item: "$10 USD Code",
+                    user: "customer@gmail.com",
+                    price: "$10.00",
+                    time: "18 min ago",
+                    status: "Delivered",
+                  },
                 ].map((t) => (
-                  <div key={t.id} className="py-3 flex items-center justify-between gap-4">
+                  <div
+                    key={t.id}
+                    className="py-3 flex items-center justify-between gap-4"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center font-mono text-[10px] text-slate-300">
                         {t.id.split("-")[1]}
                       </div>
                       <div>
-                        <span className="font-bold text-white block">{t.game}</span>
-                        <span className="text-[11px] text-slate-400">{t.item} • {t.user}</span>
+                        <span className="font-bold text-white block">
+                          {t.game}
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          {t.item} • {t.user}
+                        </span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="font-black text-white block">{t.price}</span>
-                      <span className="text-[10px] text-emerald-400 font-semibold">{t.status} • {t.time}</span>
+                      <span className="font-black text-white block">
+                        {t.price}
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-semibold">
+                        {t.status} • {t.time}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -1136,7 +1442,9 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {uploadErrorR2 && (
-                  <p className="mb-2 text-[11px] text-red-400">{uploadErrorR2}</p>
+                  <p className="mb-2 text-[11px] text-red-400">
+                    {uploadErrorR2}
+                  </p>
                 )}
 
                 {/* Direct Image URL fallback or edit */}
