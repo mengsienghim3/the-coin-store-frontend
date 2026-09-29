@@ -1203,15 +1203,7 @@ export default function EditGamePage() {
                     </h4>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-                    <div>
-                      <span className="text-[10px] text-slate-400 block leading-none">
-                        {previewLang === "km" ? "ចាប់ពី" : "From"}
-                      </span>
-                      <span className="text-xs font-black text-amber-400">
-                        {startingPrice || "$0.99"}
-                      </span>
-                    </div>
+                  <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-end text-xs">
                     <span className="text-purple-300 font-bold text-xs flex items-center gap-0.5">
                       {previewLang === "km" ? "បញ្ចូល" : "Reload"}{" "}
                       <ArrowUpRight className="w-3.5 h-3.5" />

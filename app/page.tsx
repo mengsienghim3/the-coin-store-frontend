@@ -379,16 +379,8 @@ export default function StoreHomePage() {
                       </h3>
                     </div>
 
-                    <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-                      <div>
-                        <span className="text-[9px] sm:text-[10px] text-slate-400 block leading-none">
-                          {tCatalog("fromPrice")}
-                        </span>
-                        <span className="text-xs sm:text-sm font-black text-amber-400">
-                          {game.startingPrice || "$0.99"}
-                        </span>
-                      </div>
-                      <span className="text-purple-300 font-bold text-[10px] sm:text-xs flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                    <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-white/10 flex items-center justify-end text-xs">
+                      <span className="text-purple-300 font-bold text-[10px] sm:text-xs flex items-center gap-0.5 group-hover:text-pink-300 group-hover:translate-x-0.5 transition-all">
                         {tCatalog("reloadAction")}{" "}
                         <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       </span>

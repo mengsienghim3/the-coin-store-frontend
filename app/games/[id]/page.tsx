@@ -474,31 +474,10 @@ export default function GameTopupPage() {
                 alt={gameDisplayName}
                 className="w-full h-full object-cover"
               />
-              <span className="absolute bottom-1 left-1 right-1 sm:bottom-1.5 sm:left-1.5 sm:right-1.5 text-center px-1 sm:px-1.5 py-0.5 rounded-md bg-purple-600/90 backdrop-blur-md text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow">
-                ⚡ {tGame("instantTag")}
-              </span>
             </div>
 
             {/* Game Info */}
             <div className="flex-1 min-w-0 space-y-1 sm:space-y-1.5">
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                  {game.category || "MOBA"}
-                </span>
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">
-                  <GameCurrencyIcon
-                    iconType={currencyInfo.currencyIcon}
-                    className="w-3 h-3 sm:w-3.5 sm:h-3.5"
-                  />
-                  <span>{currencyInfo.currencyName}</span>
-                </span>
-                {game.canValidate && (
-                  <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    ✓ {tGame("instantUidCheck")}
-                  </span>
-                )}
-              </div>
-
               <h2 className="text-lg sm:text-3xl font-black text-white tracking-tight truncate leading-tight">
                 {gameDisplayName}
               </h2>
@@ -524,13 +503,15 @@ export default function GameTopupPage() {
         {isSuccess ? (
           /* SUCCESS CONFIRMATION RECEIPT */
           <div className="max-w-xl mx-auto py-8 sm:py-12 px-4 sm:px-6 rounded-2xl sm:rounded-3xl bg-[#141033] border border-emerald-500/30 text-center shadow-2xl shadow-emerald-500/10 animate-in fade-in zoom-in-95 duration-300">
-            <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 flex items-center justify-center mx-auto mb-4 sm:mb-5 shadow-lg ${
-              paymentStatus === "COMPLETED"
-                ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-emerald-500/20"
-                : paymentStatus === "PENDING"
-                  ? "bg-amber-500/20 border-amber-500/40 text-amber-400 shadow-amber-500/20"
-                  : "bg-red-500/20 border-red-500/40 text-red-400 shadow-red-500/20"
-            }`}>
+            <div
+              className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 flex items-center justify-center mx-auto mb-4 sm:mb-5 shadow-lg ${
+                paymentStatus === "COMPLETED"
+                  ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-emerald-500/20"
+                  : paymentStatus === "PENDING"
+                    ? "bg-amber-500/20 border-amber-500/40 text-amber-400 shadow-amber-500/20"
+                    : "bg-red-500/20 border-red-500/40 text-red-400 shadow-red-500/20"
+              }`}
+            >
               {paymentStatus === "PENDING" ? (
                 <RefreshCw className="w-8 h-8 sm:w-10 sm:h-10 animate-spin" />
               ) : paymentStatus === "COMPLETED" ? (
@@ -540,13 +521,15 @@ export default function GameTopupPage() {
               )}
             </div>
 
-            <span className={`px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-black uppercase tracking-wider border inline-block mb-2 sm:mb-3 ${
-              paymentStatus === "COMPLETED"
-                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                : paymentStatus === "PENDING"
-                  ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                  : "bg-red-500/20 text-red-300 border-red-500/30"
-            }`}>
+            <span
+              className={`px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-black uppercase tracking-wider border inline-block mb-2 sm:mb-3 ${
+                paymentStatus === "COMPLETED"
+                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                  : paymentStatus === "PENDING"
+                    ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                    : "bg-red-500/20 text-red-300 border-red-500/30"
+              }`}
+            >
               {paymentStatus === "PENDING"
                 ? "Verifying payment"
                 : paymentStatus === "COMPLETED"
