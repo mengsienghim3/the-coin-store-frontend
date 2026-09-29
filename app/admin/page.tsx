@@ -38,6 +38,9 @@ import {
   Wallet,
   Key,
   BadgePercent,
+  Gamepad2,
+  Check,
+  Gift,
 } from "lucide-react";
 import {
   fetchBanners,
@@ -49,9 +52,19 @@ import {
   clearStoredAdmin,
   verifyAdminSession,
   fetchProviderProfile,
+  fetchGames,
+  syncGamesWithProvider,
+  updateGame,
+  deleteGame,
+  fetchGiftCards,
+  syncGiftCardsWithProvider,
+  updateGiftCard,
+  deleteGiftCard,
   Banner,
   AdminUser,
   ProviderProfile,
+  Game,
+  GiftCard,
 } from "../../lib/api";
 
 export default function AdminDashboardPage() {
@@ -67,8 +80,30 @@ export default function AdminDashboardPage() {
     useState<ProviderProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
-  // Primary Navigation View: 'banners' | 'sales'
-  const [adminView, setAdminView] = useState<"banners" | "sales">("banners");
+  // Games Catalog State
+  const [gamesList, setGamesList] = useState<Game[]>([]);
+  const [gamesLoading, setGamesLoading] = useState(false);
+  const [syncingGames, setSyncingGames] = useState(false);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
+  const [gameSearchQuery, setGameSearchQuery] = useState("");
+  const [gameStatusFilter, setGameStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
+
+  // Gift Cards Catalog State
+  const [giftCardsList, setGiftCardsList] = useState<GiftCard[]>([]);
+  const [giftCardsLoading, setGiftCardsLoading] = useState(false);
+  const [syncingGiftCards, setSyncingGiftCards] = useState(false);
+  const [gcSyncNotice, setGcSyncNotice] = useState<string | null>(null);
+  const [giftCardSearchQuery, setGiftCardSearchQuery] = useState("");
+  const [giftCardStatusFilter, setGiftCardStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
+
+  // Primary Navigation View: 'banners' | 'sales' | 'games' | 'gift-cards'
+  const [adminView, setAdminView] = useState<
+    "banners" | "sales" | "games" | "gift-cards"
+  >("banners");
 
   // Hamburger Drawer state
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -88,6 +123,7 @@ export default function AdminDashboardPage() {
   // Edit banner state
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [editTitleKh, setEditTitleKh] = useState("");
   const [editImageUrl, setEditImageUrl] = useState("");
   const [editLinkUrl, setEditLinkUrl] = useState("");
   const [editOrder, setEditOrder] = useState(1);
@@ -107,6 +143,7 @@ export default function AdminDashboardPage() {
 
   // New banner form state
   const [newTitle, setNewTitle] = useState("");
+  const [newTitleKh, setNewTitleKh] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newOrder, setNewOrder] = useState(1);
@@ -119,8 +156,24 @@ export default function AdminDashboardPage() {
       return;
     }
     setAdmin(session.user);
+
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      const viewParam = searchParams.get("view");
+      if (
+        viewParam === "games" ||
+        viewParam === "sales" ||
+        viewParam === "gift-cards" ||
+        viewParam === "banners"
+      ) {
+        setAdminView(viewParam);
+      }
+    }
+
     loadBanners();
     loadProfile();
+    loadGames();
+    loadGiftCards();
 
     // Verify session validity with backend
     verifyAdminSession(session.token).then((verifiedUser) => {
@@ -144,6 +197,104 @@ export default function AdminDashboardPage() {
       console.error("Failed to load provider profile", err);
     } finally {
       setProfileLoading(false);
+    }
+  };
+
+  const loadGames = async () => {
+    setGamesLoading(true);
+    try {
+      const data = await fetchGames(true);
+      setGamesList(data);
+    } catch (err) {
+      console.error("Failed to load games", err);
+    } finally {
+      setGamesLoading(false);
+    }
+  };
+
+  const handleSyncGames = async () => {
+    setSyncingGames(true);
+    setSyncNotice(null);
+    try {
+      const res = await syncGamesWithProvider();
+      setGamesList(res.items);
+      setSyncNotice(
+        `Synced ${res.synced} games from provider (${res.created} new, ${res.updated} updated).`,
+      );
+      setTimeout(() => setSyncNotice(null), 7000);
+    } catch (err: unknown) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Failed to sync games with provider",
+      );
+    } finally {
+      setSyncingGames(false);
+    }
+  };
+
+  const handleToggleGameStatus = async (game: Game) => {
+    setActionLoading(true);
+    try {
+      const updated = await updateGame(game.id, { isActive: !game.isActive });
+      setGamesList((prev) => prev.map((g) => (g.id === game.id ? updated : g)));
+    } catch (err: unknown) {
+      alert(
+        err instanceof Error ? err.message : "Failed to toggle game status",
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const loadGiftCards = async () => {
+    setGiftCardsLoading(true);
+    try {
+      const data = await fetchGiftCards(true);
+      setGiftCardsList(data);
+    } catch (err) {
+      console.error("Failed to load gift cards", err);
+    } finally {
+      setGiftCardsLoading(false);
+    }
+  };
+
+  const handleSyncGiftCards = async () => {
+    setSyncingGiftCards(true);
+    setGcSyncNotice(null);
+    try {
+      const res = await syncGiftCardsWithProvider();
+      setGiftCardsList(res.items);
+      setGcSyncNotice(
+        `Synced ${res.synced} gift cards from provider (${res.created} new, ${res.updated} updated).`,
+      );
+      setTimeout(() => setGcSyncNotice(null), 7000);
+    } catch (err: unknown) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Failed to sync gift cards with provider",
+      );
+    } finally {
+      setSyncingGiftCards(false);
+    }
+  };
+
+  const handleToggleGiftCardStatus = async (gc: GiftCard) => {
+    setActionLoading(true);
+    try {
+      const updated = await updateGiftCard(gc.id, { isActive: !gc.isActive });
+      setGiftCardsList((prev) =>
+        prev.map((item) => (item.id === gc.id ? updated : item)),
+      );
+    } catch (err: unknown) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Failed to toggle gift card status",
+      );
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -236,6 +387,7 @@ export default function AdminDashboardPage() {
     try {
       const created = await createBanner({
         title: newTitle,
+        titleKh: newTitleKh.trim() || undefined,
         imageUrl: newImageUrl,
         linkUrl: newLinkUrl || undefined,
         order: Number(newOrder),
@@ -246,6 +398,7 @@ export default function AdminDashboardPage() {
       );
       setShowAddModal(false);
       setNewTitle("");
+      setNewTitleKh("");
       setNewImageUrl("");
       setNewLinkUrl("");
       setNewOrder(banners.length + 1);
@@ -261,6 +414,7 @@ export default function AdminDashboardPage() {
   const handleOpenEditModal = (banner: Banner) => {
     setEditingBanner(banner);
     setEditTitle(banner.title);
+    setEditTitleKh(banner.titleKh || "");
     setEditImageUrl(banner.imageUrl);
     setEditLinkUrl(banner.linkUrl || "");
     setEditOrder(banner.order);
@@ -282,6 +436,7 @@ export default function AdminDashboardPage() {
     try {
       const updated = await updateBanner(editingBanner.id, {
         title: editTitle,
+        titleKh: editTitleKh.trim() || null,
         imageUrl: editImageUrl,
         linkUrl: editLinkUrl || undefined,
         order: Number(editOrder),
@@ -333,6 +488,45 @@ export default function AdminDashboardPage() {
 
   const activeCount = banners.filter((b) => b.isActive).length;
 
+  // Filtered games
+  const filteredGames = gamesList.filter((g) => {
+    const q = gameSearchQuery.toLowerCase();
+    const matchesSearch =
+      g.name.toLowerCase().includes(q) ||
+      g.slug.toLowerCase().includes(q) ||
+      (g.category && g.category.toLowerCase().includes(q)) ||
+      (g.providerCategoryId && g.providerCategoryId.toLowerCase().includes(q));
+    const matchesStatus =
+      gameStatusFilter === "all"
+        ? true
+        : gameStatusFilter === "active"
+          ? g.isActive
+          : !g.isActive;
+    return matchesSearch && matchesStatus;
+  });
+
+  const activeGamesCount = gamesList.filter((g) => g.isActive).length;
+
+  // Filtered gift cards
+  const filteredGiftCards = giftCardsList.filter((gc) => {
+    const q = giftCardSearchQuery.toLowerCase();
+    const matchesSearch =
+      (gc.name || "").toLowerCase().includes(q) ||
+      (gc.slug || "").toLowerCase().includes(q) ||
+      (gc.category || "").toLowerCase().includes(q) ||
+      (gc.brand || "").toLowerCase().includes(q) ||
+      (gc.description || "").toLowerCase().includes(q);
+    const matchesStatus =
+      giftCardStatusFilter === "all"
+        ? true
+        : giftCardStatusFilter === "active"
+          ? gc.isActive
+          : !gc.isActive;
+    return matchesSearch && matchesStatus;
+  });
+
+  const activeGiftCardsCount = giftCardsList.filter((gc) => gc.isActive).length;
+
   return (
     <div className="min-h-screen bg-[#07080f] text-slate-100 flex flex-col selection:bg-purple-500 selection:text-white pb-safe-nav md:pb-8">
       {/* ========================================================================= */}
@@ -352,10 +546,12 @@ export default function AdminDashboardPage() {
               {/* Header */}
               <div className="flex items-center justify-between pb-5 border-b border-white/10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-500 to-amber-400 p-[1.5px] shadow-lg shadow-purple-500/20">
-                    <div className="w-full h-full rounded-[14px] bg-[#0e0c26] flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-purple-400" />
-                    </div>
+                  <div className="w-10 h-10 rounded-2xl bg-[#141033] border border-white/10 p-1 flex items-center justify-center shadow-lg shadow-purple-500/20 shrink-0">
+                    <img
+                      src="/logo.webp"
+                      alt="The Coin Store Logo"
+                      className="w-full h-full object-contain rounded-xl"
+                    />
                   </div>
                   <div>
                     <span className="font-black text-sm text-white block leading-tight">
@@ -428,25 +624,45 @@ export default function AdminDashboardPage() {
                     Product Catalogs
                   </span>
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 bg-white/[0.02]">
+                    <button
+                      onClick={() => {
+                        setAdminView("games");
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                        adminView === "games"
+                          ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-600/30"
+                          : "text-slate-300 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
                       <div className="flex items-center gap-3">
-                        <ShoppingBag className="w-4 h-4 text-purple-400" />
+                        <Gamepad2 className="w-4 h-4 text-purple-400" />
                         <span>Game Diamonds</span>
                       </div>
-                      <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/20">
-                        Next
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono">
+                        {gamesList.length}
                       </span>
-                    </div>
+                    </button>
 
-                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 bg-white/[0.02]">
+                    <button
+                      onClick={() => {
+                        setAdminView("gift-cards");
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                        adminView === "gift-cards"
+                          ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-600/30"
+                          : "text-slate-300 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
                       <div className="flex items-center gap-3">
                         <CreditCard className="w-4 h-4 text-pink-400" />
                         <span>Gift Cards</span>
                       </div>
-                      <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 border border-pink-500/20">
-                        Next
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-mono">
+                        {giftCardsList.length}
                       </span>
-                    </div>
+                    </button>
                   </div>
                 </div>
 
@@ -581,8 +797,12 @@ export default function AdminDashboardPage() {
               <span className="text-xs font-bold tracking-wide">Menu</span>
             </button>
 
-            <div className="w-10 h-10 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
-              <Shield className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-[#141033] border border-white/10 p-1 flex items-center justify-center shadow-lg shadow-purple-500/20 shrink-0">
+              <img
+                src="/logo.webp"
+                alt="The Coin Store Logo"
+                className="w-full h-full object-contain rounded-xl"
+              />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -603,18 +823,40 @@ export default function AdminDashboardPage() {
           <div className="flex items-center bg-white/5 p-1 rounded-2xl border border-white/10">
             <button
               onClick={() => setAdminView("sales")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                 adminView === "sales"
                   ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-md shadow-purple-600/30"
                   : "text-slate-400 hover:text-white"
               }`}
             >
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>Sales Dashboard</span>
+              <span>Sales</span>
+            </button>
+            <button
+              onClick={() => setAdminView("games")}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                adminView === "games"
+                  ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-md shadow-purple-600/30"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <Gamepad2 className="w-3.5 h-3.5" />
+              <span>Games ({gamesList.length})</span>
+            </button>
+            <button
+              onClick={() => setAdminView("gift-cards")}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                adminView === "gift-cards"
+                  ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-md shadow-purple-600/30"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>Gift Cards ({giftCardsList.length})</span>
             </button>
             <button
               onClick={() => setAdminView("banners")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                 adminView === "banners"
                   ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-md shadow-purple-600/30"
                   : "text-slate-400 hover:text-white"
@@ -698,12 +940,22 @@ export default function AdminDashboardPage() {
               <Menu className="w-5 h-5" />
             </button>
 
-            <div className="w-9 h-9 rounded-xl bg-purple-600/25 border border-purple-500/40 flex items-center justify-center text-purple-300">
-              <Shield className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-xl bg-[#141033] border border-white/10 p-1 flex items-center justify-center shadow-lg shadow-purple-500/20 shrink-0">
+              <img
+                src="/logo.webp"
+                alt="The Coin Store Logo"
+                className="w-full h-full object-contain rounded-lg"
+              />
             </div>
             <div>
               <h1 className="font-black text-sm text-white leading-tight">
-                {adminView === "sales" ? "Sales Overview" : "Banner Control"}
+                {adminView === "sales"
+                  ? "Sales Overview"
+                  : adminView === "games"
+                    ? "Game Diamonds"
+                    : adminView === "gift-cards"
+                      ? "Gift Cards"
+                      : "Banner Control"}
               </h1>
               <span className="text-[10px] text-purple-300 block font-mono leading-none">
                 Reseller Control
@@ -713,15 +965,53 @@ export default function AdminDashboardPage() {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={loadBanners}
-              disabled={loading || actionLoading}
+              onClick={
+                adminView === "games"
+                  ? loadGames
+                  : adminView === "gift-cards"
+                    ? loadGiftCards
+                    : loadBanners
+              }
+              disabled={
+                loading || gamesLoading || giftCardsLoading || actionLoading
+              }
               className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-300 active:scale-95 transition-all"
               title="Refresh"
             >
               <RefreshCw
-                className={`w-4 h-4 ${loading ? "animate-spin text-purple-400" : ""}`}
+                className={`w-4 h-4 ${
+                  loading || gamesLoading || giftCardsLoading
+                    ? "animate-spin text-purple-400"
+                    : ""
+                }`}
               />
             </button>
+            {adminView === "games" && (
+              <button
+                onClick={handleSyncGames}
+                disabled={syncingGames || actionLoading}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-purple-600/30 active:scale-95 transition-all"
+                title="Sync from Provider"
+              >
+                <RefreshCw
+                  className={`w-3.5 h-3.5 ${syncingGames ? "animate-spin" : ""}`}
+                />
+                <span>Sync</span>
+              </button>
+            )}
+            {adminView === "gift-cards" && (
+              <button
+                onClick={handleSyncGiftCards}
+                disabled={syncingGiftCards || actionLoading}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-purple-600/30 active:scale-95 transition-all"
+                title="Sync Gift Cards from Provider"
+              >
+                <RefreshCw
+                  className={`w-3.5 h-3.5 ${syncingGiftCards ? "animate-spin" : ""}`}
+                />
+                <span>Sync</span>
+              </button>
+            )}
             {adminView === "banners" && (
               <button
                 onClick={() => setShowAddModal(true)}
@@ -1275,6 +1565,540 @@ export default function AdminDashboardPage() {
             )}
           </section>
         )}
+
+        {/* ======================================================================= */}
+        {/* 3. GAME DIAMONDS CATALOG SECTION (Shown when adminView === 'games')     */}
+        {/* ======================================================================= */}
+        {adminView === "games" && (
+          <section className="space-y-5 animate-in fade-in duration-300">
+            {/* Sync Notification Toast */}
+            {syncNotice && (
+              <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center justify-between gap-3 shadow-lg shadow-emerald-500/10 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>{syncNotice}</span>
+                </div>
+                <button
+                  onClick={() => setSyncNotice(null)}
+                  className="text-emerald-400 hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {/* Header & Sync Toolbar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-lg md:text-xl font-extrabold text-white flex items-center gap-2">
+                    <Gamepad2 className="w-5 h-5 text-purple-400" />
+                    Game Diamonds Catalog
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-300 border border-purple-500/30 font-mono">
+                    {gamesList.length} Games
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Synced directly with KAS Provider. Customize names and upload
+                  your own Cloudflare R2 artwork.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <button
+                  onClick={loadGames}
+                  disabled={gamesLoading || syncingGames || actionLoading}
+                  className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 transition-colors"
+                  title="Refresh games list"
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 ${gamesLoading ? "animate-spin text-purple-400" : ""}`}
+                  />
+                </button>
+
+                <button
+                  onClick={handleSyncGames}
+                  disabled={syncingGames || actionLoading}
+                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-500 hover:opacity-95 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30 transition-all active:scale-95"
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 ${syncingGames ? "animate-spin" : ""}`}
+                  />
+                  <span>
+                    {syncingGames
+                      ? "Syncing from Provider..."
+                      : "Sync from Provider"}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter & Search Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#0e111a] border border-white/10 rounded-2xl p-2.5">
+              <div className="relative w-full sm:w-80">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Filter games by title, slug, category..."
+                  value={gameSearchQuery}
+                  onChange={(e) => setGameSearchQuery(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
+                <button
+                  onClick={() => setGameStatusFilter("all")}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                    gameStatusFilter === "all"
+                      ? "bg-purple-600 text-white shadow"
+                      : "bg-white/5 text-slate-400 hover:text-white"
+                  }`}
+                >
+                  All ({gamesList.length})
+                </button>
+                <button
+                  onClick={() => setGameStatusFilter("active")}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                    gameStatusFilter === "active"
+                      ? "bg-emerald-600 text-white shadow"
+                      : "bg-white/5 text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Active ({activeGamesCount})
+                </button>
+                <button
+                  onClick={() => setGameStatusFilter("inactive")}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                    gameStatusFilter === "inactive"
+                      ? "bg-red-600 text-white shadow"
+                      : "bg-white/5 text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Inactive ({gamesList.length - activeGamesCount})
+                </button>
+              </div>
+            </div>
+
+            {/* Games Grid */}
+            {gamesLoading ? (
+              <div className="py-20 flex flex-col items-center justify-center text-slate-400">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-500 mb-3" />
+                <p className="text-xs">Loading games from database...</p>
+              </div>
+            ) : filteredGames.length === 0 ? (
+              <div className="rounded-3xl bg-[#0e111a] border border-white/10 p-10 text-center">
+                <Gamepad2 className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+                <h3 className="font-bold text-white text-sm">
+                  {gamesList.length === 0
+                    ? "No Games Synced Yet"
+                    : "No Games Match Filter Criteria"}
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 mb-4">
+                  {gamesList.length === 0
+                    ? "Click 'Sync from Provider' to automatically import game catalogs from KAS Reseller API."
+                    : "Try adjusting your search query or reset status filters."}
+                </p>
+                {gamesList.length === 0 && (
+                  <button
+                    onClick={handleSyncGames}
+                    disabled={syncingGames}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-xs inline-flex items-center gap-2 shadow-lg shadow-purple-600/30"
+                  >
+                    <RefreshCw
+                      className={`w-3.5 h-3.5 ${syncingGames ? "animate-spin" : ""}`}
+                    />
+                    <span>Sync from Provider</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+                {filteredGames.map((game) => (
+                  <div
+                    key={game.id}
+                    className={`rounded-2xl bg-[#0e111a] border transition-all overflow-hidden flex flex-col justify-between shadow-xl ${
+                      game.isActive
+                        ? "border-white/10 hover:border-purple-500/50"
+                        : "border-white/5 opacity-60"
+                    }`}
+                  >
+                    <div>
+                      {/* Game Image Thumbnail */}
+                      <div className="relative aspect-[4/3] w-full bg-slate-950 overflow-hidden group">
+                        <img
+                          src={game.imageUrl}
+                          alt={game.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {/* Order & Custom Image Badge */}
+                        <div className="absolute top-2 left-2 flex flex-col gap-1">
+                          <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-[10px] font-mono text-slate-300 border border-white/10 self-start">
+                            #{game.order}
+                          </span>
+                          {game.isCustomImage ? (
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-[9px] font-bold text-emerald-300 backdrop-blur-md">
+                              Custom R2 Cover
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-md bg-black/60 border border-white/10 text-[9px] font-medium text-slate-400 backdrop-blur-md">
+                              Provider Art
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="absolute top-2 right-2">
+                          {game.isActive ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-[10px] font-bold text-emerald-300 backdrop-blur-md">
+                              <CheckCircle className="w-3 h-3" />
+                              Active
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-[10px] font-bold text-red-300 backdrop-blur-md">
+                              <XCircle className="w-3 h-3" />
+                              Inactive
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Bottom Overlay: Packages & Validation */}
+                        <div className="absolute bottom-2 inset-x-2 flex items-center justify-between gap-1 text-[10px]">
+                          {game.canValidate ? (
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-bold backdrop-blur-md">
+                              ✓ Auto Validate
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-md bg-black/60 border border-white/10 text-slate-400 backdrop-blur-md">
+                              Direct Top-Up
+                            </span>
+                          )}
+                          <span className="px-2 py-0.5 rounded-md bg-purple-950/80 border border-purple-500/40 text-purple-300 font-bold backdrop-blur-md font-mono">
+                            {game.packageCount ?? 0} Packages
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Card Content */}
+                      <div className="p-4 space-y-2">
+                        <div>
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-bold text-white text-sm line-clamp-1">
+                              {game.name}
+                            </h3>
+                            {game.isCustomName && (
+                              <span className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 flex-shrink-0">
+                                Custom
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-400 font-mono truncate mt-0.5">
+                            {game.slug}
+                          </p>
+                        </div>
+
+                        <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">
+                          <span className="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-[10px]">
+                            {game.category || "MOBA"}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {game.hasZoneId ? "UID + Zone" : "UID only"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Actions */}
+                    <div className="p-4 pt-0 border-t border-white/5 flex items-center justify-between gap-2 mt-2">
+                      <button
+                        onClick={() => handleToggleGameStatus(game)}
+                        disabled={actionLoading}
+                        className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all active:scale-98 ${
+                          game.isActive
+                            ? "bg-white/5 hover:bg-white/10 text-slate-300 border-white/10"
+                            : "bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40"
+                        }`}
+                      >
+                        {game.isActive ? "Turn Off" : "Set Active"}
+                      </button>
+
+                      <Link
+                        href={`/admin/games/${game.id}`}
+                        className="px-3 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-300 active:scale-95 transition-all flex items-center gap-1.5 text-xs font-semibold"
+                        title="Edit game in full page editor"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        <span>Edit</span>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ======================================================================= */}
+        {/* 4. GIFT CARDS VIEW (Shown when adminView === 'gift-cards')              */}
+        {/* ======================================================================= */}
+        {adminView === "gift-cards" && (
+          <section className="space-y-5 animate-in fade-in duration-300">
+            {/* Sync Notification Banner */}
+            {gcSyncNotice && (
+              <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between animate-in fade-in">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{gcSyncNotice}</span>
+                </div>
+                <button
+                  onClick={() => setGcSyncNotice(null)}
+                  className="text-emerald-400 hover:text-white text-xs px-2"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Header / Actions Bar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
+              <div>
+                <h2 className="text-xl md:text-2xl font-black text-white flex items-center gap-2.5">
+                  <CreditCard className="w-6 h-6 text-pink-400" />
+                  <span>Digital Gift Cards Catalog</span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300 font-mono">
+                    {giftCardsList.length} Cards
+                  </span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Manage digital vouchers, steam codes, and gaming gift cards
+                  synced from the provider. Custom names, descriptions, and
+                  uploaded R2 cover art are permanently preserved.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={loadGiftCards}
+                  disabled={giftCardsLoading || actionLoading}
+                  className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors flex items-center gap-2 text-xs"
+                  title="Reload from local database"
+                >
+                  <RefreshCw
+                    className={`w-3.5 h-3.5 ${giftCardsLoading ? "animate-spin text-purple-400" : ""}`}
+                  />
+                  <span className="hidden sm:inline">Refresh</span>
+                </button>
+
+                <button
+                  onClick={handleSyncGiftCards}
+                  disabled={syncingGiftCards || actionLoading}
+                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-purple-600/30 hover:opacity-95 transition-opacity active:scale-95 disabled:opacity-50"
+                  title="Sync live gift cards from KAS Reseller API"
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 ${syncingGiftCards ? "animate-spin" : ""}`}
+                  />
+                  <span>
+                    {syncingGiftCards
+                      ? "Syncing Cards..."
+                      : "Sync from Provider"}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter & Search Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#0e111a] border border-white/10 rounded-2xl p-2.5">
+              <div className="relative w-full sm:w-80">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Filter gift cards by title, brand, category..."
+                  value={giftCardSearchQuery}
+                  onChange={(e) => setGiftCardSearchQuery(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
+                <button
+                  onClick={() => setGiftCardStatusFilter("all")}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                    giftCardStatusFilter === "all"
+                      ? "bg-purple-600 text-white shadow"
+                      : "bg-white/5 text-slate-400 hover:text-white"
+                  }`}
+                >
+                  All ({giftCardsList.length})
+                </button>
+                <button
+                  onClick={() => setGiftCardStatusFilter("active")}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                    giftCardStatusFilter === "active"
+                      ? "bg-emerald-600 text-white shadow"
+                      : "bg-white/5 text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Active ({activeGiftCardsCount})
+                </button>
+                <button
+                  onClick={() => setGiftCardStatusFilter("inactive")}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                    giftCardStatusFilter === "inactive"
+                      ? "bg-red-600 text-white shadow"
+                      : "bg-white/5 text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Inactive ({giftCardsList.length - activeGiftCardsCount})
+                </button>
+              </div>
+            </div>
+
+            {/* Gift Cards Grid */}
+            {giftCardsLoading ? (
+              <div className="py-20 flex flex-col items-center justify-center text-slate-400">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-500 mb-3" />
+                <p className="text-xs">Loading gift cards from database...</p>
+              </div>
+            ) : filteredGiftCards.length === 0 ? (
+              <div className="rounded-3xl bg-[#0e111a] border border-white/10 p-10 text-center">
+                <CreditCard className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+                <h3 className="font-bold text-white text-sm">
+                  {giftCardsList.length === 0
+                    ? "No Gift Cards Synced Yet"
+                    : "No Gift Cards Match Filter Criteria"}
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 mb-4">
+                  {giftCardsList.length === 0
+                    ? "Click 'Sync from Provider' to automatically import gift cards from KAS Reseller API."
+                    : "Try adjusting your search query or reset status filters."}
+                </p>
+                {giftCardsList.length === 0 && (
+                  <button
+                    onClick={handleSyncGiftCards}
+                    disabled={syncingGiftCards}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-xs inline-flex items-center gap-2 shadow-lg shadow-purple-600/30"
+                  >
+                    <RefreshCw
+                      className={`w-3.5 h-3.5 ${syncingGiftCards ? "animate-spin" : ""}`}
+                    />
+                    <span>Sync from Provider</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+                {filteredGiftCards.map((gc) => (
+                  <div
+                    key={gc.id}
+                    className={`rounded-2xl bg-[#0e111a] border transition-all overflow-hidden flex flex-col justify-between shadow-xl ${
+                      gc.isActive
+                        ? "border-white/10 hover:border-pink-500/50"
+                        : "border-white/5 opacity-60"
+                    }`}
+                  >
+                    <div>
+                      {/* Gift Card Artwork Thumbnail */}
+                      <div className="relative aspect-[16/10] w-full bg-slate-950 overflow-hidden group">
+                        <img
+                          src={gc.imageUrl}
+                          alt={gc.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {/* Order & Custom Image Badge */}
+                        <div className="absolute top-2 left-2 flex flex-col gap-1">
+                          <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-[10px] font-mono text-slate-300 border border-white/10 self-start">
+                            #{gc.order}
+                          </span>
+                          {gc.isCustomImage ? (
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-[9px] font-bold text-emerald-300 backdrop-blur-md">
+                              Custom R2 Cover
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-md bg-black/60 border border-white/10 text-[9px] font-medium text-slate-400 backdrop-blur-md">
+                              Provider Art
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="absolute top-2 right-2">
+                          {gc.isActive ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-[10px] font-bold text-emerald-300 backdrop-blur-md">
+                              <CheckCircle className="w-3 h-3" />
+                              Active
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-[10px] font-bold text-red-300 backdrop-blur-md">
+                              <XCircle className="w-3 h-3" />
+                              Inactive
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Category badge */}
+                        <div className="absolute bottom-2 left-2">
+                          <span className="px-2 py-0.5 rounded-md bg-purple-900/80 backdrop-blur-md border border-purple-500/30 text-[10px] font-bold text-purple-200">
+                            {gc.category}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Content Info */}
+                      <div className="p-4">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-pink-400 font-mono">
+                            {gc.brand || "Digital Voucher"}
+                          </span>
+                          {gc.isCustomName && (
+                            <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20">
+                              Renamed
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="font-extrabold text-white text-sm line-clamp-1 group-hover:text-pink-300 transition-colors">
+                          {gc.name}
+                        </h3>
+
+                        {gc.description && (
+                          <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed whitespace-pre-line">
+                            {gc.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Footer */}
+                    <div className="p-4 pt-0 flex items-center gap-2">
+                      <button
+                        onClick={() => handleToggleGiftCardStatus(gc)}
+                        disabled={actionLoading}
+                        className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all active:scale-98 ${
+                          gc.isActive
+                            ? "bg-white/5 hover:bg-white/10 text-slate-300 border-white/10"
+                            : "bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40"
+                        }`}
+                      >
+                        {gc.isActive ? "Turn Off" : "Set Active"}
+                      </button>
+
+                      <Link
+                        href={`/admin/gift-cards/${gc.id}`}
+                        className="px-3 py-2 rounded-xl bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 text-pink-300 active:scale-95 transition-all flex items-center gap-1.5 text-xs font-semibold"
+                        title="Edit gift card on dedicated page"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        <span>Edit</span>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </main>
 
       {/* ========================================================================= */}
@@ -1293,6 +2117,32 @@ export default function AdminDashboardPage() {
           >
             <TrendingUp className="w-5 h-5" />
             <span className="text-[10px]">Sales</span>
+          </button>
+
+          {/* Games Tab */}
+          <button
+            onClick={() => setAdminView("games")}
+            className={`flex flex-col items-center justify-center flex-1 py-1 gap-1 transition-colors ${
+              adminView === "games"
+                ? "text-purple-400 font-bold"
+                : "text-slate-400"
+            }`}
+          >
+            <Gamepad2 className="w-5 h-5" />
+            <span className="text-[10px]">Games</span>
+          </button>
+
+          {/* Gift Cards Tab */}
+          <button
+            onClick={() => setAdminView("gift-cards")}
+            className={`flex flex-col items-center justify-center flex-1 py-1 gap-1 transition-colors ${
+              adminView === "gift-cards"
+                ? "text-purple-400 font-bold"
+                : "text-slate-400"
+            }`}
+          >
+            <CreditCard className="w-5 h-5" />
+            <span className="text-[10px]">Gift Cards</span>
           </button>
 
           {/* Banners Tab */}
@@ -1368,6 +2218,24 @@ export default function AdminDashboardPage() {
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="e.g. Free Fire Diamond Rush Event"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-slate-300">
+                    Banner Title (Khmer / ភាសាខ្មែរ)
+                  </label>
+                  <span className="text-[10px] text-pink-400 font-medium">
+                    🇰🇭 Optional Khmer title
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={newTitleKh}
+                  onChange={(e) => setNewTitleKh(e.target.value)}
+                  placeholder="e.g. មហាព្រឹត្តិការណ៍ពេជ្រ Free Fire"
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
                 />
               </div>
@@ -1567,6 +2435,24 @@ export default function AdminDashboardPage() {
                   required
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-slate-300">
+                    Banner Title (Khmer / ភាសាខ្មែរ)
+                  </label>
+                  <span className="text-[10px] text-pink-400 font-medium">
+                    🇰🇭 Shown when Khmer is selected
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={editTitleKh}
+                  onChange={(e) => setEditTitleKh(e.target.value)}
+                  placeholder="e.g. មហាព្រឹត្តិការណ៍ពេជ្រ Free Fire"
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
                 />
               </div>

@@ -75,8 +75,12 @@ export default function AdminLoginPage() {
       {/* Login Card */}
       <div className="w-full max-w-md bg-[#0e111a] border border-white/10 rounded-3xl p-8 shadow-2xl shadow-black/80 relative z-10 backdrop-blur-xl">
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-lg shadow-amber-500/20 mb-4">
-            <Shield className="w-7 h-7 text-slate-950 stroke-[2.5]" />
+          <div className="w-16 h-16 rounded-2xl bg-[#141033] border border-white/10 flex items-center justify-center shadow-lg shadow-purple-500/20 mb-4 p-2">
+            <img
+              src="/logo.webp"
+              alt="The Coin Store Logo"
+              className="w-full h-full object-contain rounded-xl"
+            />
           </div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">
             Admin Control Panel

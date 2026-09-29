@@ -174,3 +174,9 @@ body {
 .pb-safe-nav {
   padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 12px) + 5rem);
 }
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
